@@ -5,7 +5,7 @@ Useful for proxifiing containerized web application that returns hardcoded URLs 
 
 All configuration is down via environment variables :
 Variable | Effects 
-:-------------:|:---------------------------:
+-------------|---------------------------
 VILLIP_URL | Base URL of the application to be filtered
 VILLIP_TYPES | Comma separated list of Content-Types of the answers that will be filtered
 VILLIP_FROM / VILLIP_TO | String to be replaced / String that will replace
