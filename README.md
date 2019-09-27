@@ -4,6 +4,8 @@ proxy filtering string from the answer of the proxified application
 Useful for proxifiing containerized web application that returns hardcoded URLs not modifiable from configuration
 
 All configuration is down via environment variables :
+
+
 Variable | Effects 
 -------------|---------------------------
 VILLIP_URL | Base URL of the application to be filtered
