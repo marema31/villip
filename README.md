@@ -1,16 +1,48 @@
 # villip
-proxy filtering string from the answer of the proxified application
 
-Useful for proxifiing containerized web application that returns hardcoded URLs not modifiable from configuration
+#### Simple HTTP proxy that can do string replacement on the content of proxyfied responses.
 
-All configuration is down via environment variables :
+Villip can be used for containerization of legacy web application that provide absolute path in the page by replacing all the absolute link to the correct one without modifying the application.
+
+The replacement will be also done in Location header if the proxyfied site returns an HTTP 301 or 302 code. 
+
+# Usage
+Configuration of Villip is done via environments variables
+
+Variable          | Mandatory |  Definition
+------------------|-----------|---------------------
+VILLIP_DEBUG      | no        | If present Villip will print debug logs
+VILLIP_FROM       | yes       | First string to search
+VILLIP_TO         | yes       | Replacement for the VILLIP_FROM string
+VILLIP_FROM_XX    | no        | XX string to search (XX = number starting at 1)
+VILLIP_TO_XX      | no        | Replacement for the corresponding VILLIP_FROM_XX string
+VILLIP_PORT       | no        | Port of proxy (8080 by default)
+VILLIP_RESTRICTED | no        | Comma separated list of networks authorized to use this proxy (no restriction if empty), localhost is always authorized
+VILLIP_TYPES      | no        | Comma separated list of content type that will be filtered (by default text/html, text/css, application/javascript)
+VILLIP_URL        | yes       | Base url of the proxyfied site
 
 
-Variable | Effects 
--------------|---------------------------
-VILLIP_URL | Base URL of the application to be filtered
-VILLIP_TYPES | Comma separated list of Content-Types of the answers that will be filtered
-VILLIP_FROM / VILLIP_TO | String to be replaced / String that will replace
-VILLIP_FROM_<i> / VILLIP_TO_<i> | Other couple of string to be replaced (with <i> from 1 to ...) 
-VILLIP_DEBUG | If not empty print more logs to stdout 
+# Disclaimer
+I use this application for development environment, security was not a concern for this tool. Do not use it for production environment without being sure of what you do
 
+
+## Contribution
+I've made this project as a real use case to learn Golang.
+I've tried to adopt the Go mindset but I'm sure that other gophers could do better. 
+
+If this project can be useful for you, feel free to open issues, propose documentation updates or even pull request.
+
+Contributions are of course always welcome!
+
+1. Fork marema31/villip (https://github.com/marema31/villip/fork)
+2. Create a feature branch
+3. Commit your changes
+4. Create a Pull Request
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
+
+## License
+
+Copyright (c) 2019-present [Marc Carmier](https://github.com/marema31)
+
+Licensed under [BSD-2 Clause License](./LICENSE)
