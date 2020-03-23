@@ -7,11 +7,14 @@ Villip can be used for containerization of legacy web application that provide a
 The replacement will be also done in Location header if the proxyfied site returns an HTTP 301 or 302 code. 
 
 # Usage
-Configuration of Villip is done via environments variables
+Configuration of Villip is done via environments variables or a folder containing YAML files. More than one filter can be described (one by environment variable and the others by configuration files). Each filter must be listening to a different TCP port. 
+
+## Environment variables
 
 Variable          | Mandatory |  Definition
 ------------------|-----------|---------------------
 VILLIP_DEBUG      | no        | If present Villip will print debug logs
+VILLIP_FOLDER     | no        | Path to folder containing YAML configuration files, if present the other environment variables are no more mandatory
 VILLIP_FROM       | yes       | First string to search
 VILLIP_TO         | yes       | Replacement for the VILLIP_FROM string
 VILLIP_FROM_XX    | no        | XX string to search (XX = number starting at 1)
@@ -21,6 +24,27 @@ VILLIP_RESTRICTED | no        | Comma separated list of networks authorized to u
 VILLIP_TYPES      | no        | Comma separated list of content type that will be filtered (by default text/html, text/css, application/javascript)
 VILLIP_URL        | yes       | Base url of the proxyfied site
 
+## YAML configuration files
+Each YAML files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
+
+```yaml
+---
+port: 8081
+url: "http://localhost:1234/url1"
+replace:
+  - from: "book"
+    to: "smartphone"
+  - from: "dance"
+    to: "chat"
+  - from: "meeting"
+    to: "texting"
+restricted: 
+  - "192.168.1.0/24"
+  - "192.168.8.0/24"
+content-types:
+  - "text/html"
+  - "application/json"
+```
 
 # Disclaimer
 I use this application for development environment, security was not a concern for this tool. Do not use it for production environment without being sure of what you do
