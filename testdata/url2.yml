@@ -1,0 +1,16 @@
+---
+port: 8082
+url: "http://localhost:1235/url2"
+replace:
+  - from: "book"
+    to: "smartphone"
+  - from: "dance"
+    to: "chat"
+  - from: "meeting"
+    to: "texting"
+restricted: 
+  - "192.168.1.0/24"
+  - "192.168.8.0/24"
+content-types:
+  - "text/html"
+  - "application/json"
