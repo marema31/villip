@@ -1,10 +1,15 @@
-FROM golang:1.12 AS build_img
-ENV APP_DIR=$GOPATH/src/villip/
+FROM golang:1.13 AS build_img
+ENV APP_DIR=/app
 RUN mkdir -p $APP_DIR
 COPY *.go $APP_DIR
 WORKDIR $APP_DIR
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-   go build -gcflags "all=-N -l" -o /villip
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+COPY . .
+
+RUN go build -o /villip
 
 ENTRYPOINT /villip
 
