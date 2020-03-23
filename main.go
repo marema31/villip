@@ -13,7 +13,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 var (
 	//Froms strings to be replaced
@@ -24,21 +28,13 @@ var (
 	ContentTypes []string
 	//Restricted list of net ranges allowed to connect to villip
 	Restricted = []*net.IPNet{}
-	//Debug flag to log more informations to screen
-	Debug bool
 )
-
-func printDebug(format string, args ...interface{}) {
-	if Debug {
-		fmt.Printf(format, args...)
-	}
-}
 
 func isAuthorized(r *http.Response) (bool, error) {
 	if len(Restricted) != 0 {
 		sip, _, err := net.SplitHostPort(r.Request.RemoteAddr)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "userip: %q is not IP:port", r.Request.RemoteAddr)
+			log.WithFields(logrus.Fields{"userip": r.Request.RemoteAddr}).Error("userip is not IP:port")
 			return true, err
 		}
 
@@ -52,7 +48,7 @@ func isAuthorized(r *http.Response) (bool, error) {
 				}
 			}
 			if !seen {
-				printDebug("... forbidden from this IP \n")
+				log.WithFields(logrus.Fields{"source": ip}).Debug("forbidden from this IP")
 				buf := bytes.NewBufferString("Access forbiden from this IP")
 				r.Body = ioutil.NopCloser(buf)
 				r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
@@ -64,7 +60,7 @@ func isAuthorized(r *http.Response) (bool, error) {
 	return true, nil
 }
 
-func toFilter(r *http.Response) bool {
+func toFilter(log *logrus.Entry, r *http.Response) bool {
 	if r.StatusCode == 200 {
 		currentType := r.Header.Get("Content-Type")
 		for _, testedType := range ContentTypes {
@@ -72,11 +68,11 @@ func toFilter(r *http.Response) bool {
 				return true
 			}
 		}
-		printDebug("... skipping type = %s", currentType)
+		log.WithFields(logrus.Fields{"type": currentType}).Debug("... skipping type")
 		return false
 
 	} else if r.StatusCode != 302 && r.StatusCode != 301 {
-		printDebug("... skipping status = %d", r.StatusCode)
+		log.Debug("... skipping status")
 		return false
 	}
 	return true
@@ -85,18 +81,19 @@ func toFilter(r *http.Response) bool {
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary
 func UpdateResponse(r *http.Response) error {
 
+	requestLog := log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
-	printDebug("\n%s [%d] from %s", r.Request.URL.String(), r.StatusCode, r.Request.RemoteAddr)
+	requestLog.Debug("Request")
 
 	authorized, err := isAuthorized(r)
 	if err != nil || !authorized {
 		return err
 	}
 
-	if !toFilter(r) {
+	if !toFilter(requestLog, r) {
 		return nil
 	}
-	printDebug("...filtering")
+	requestLog.Debug("filtering")
 
 	var b []byte
 
@@ -121,11 +118,11 @@ func UpdateResponse(r *http.Response) error {
 
 	location := r.Header.Get("Location")
 	if location != "" {
-		printDebug("... will rewrite location header = %s", location)
+		origLocation := location
 		for i := range Froms {
 			location = strings.Replace(location, Froms[i], Tos[i], -1)
 		}
-		printDebug("=> %s\n", location)
+		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
 	}
 
@@ -166,24 +163,22 @@ func main() {
 	var ok bool
 	var from, to, restricteds string
 
+	log.SetLevel(logrus.InfoLevel)
 	if _, ok = os.LookupEnv("VILLIP_DEBUG"); ok {
-		Debug = true
+		log.SetLevel(logrus.DebugLevel)
 	}
 	if from, ok = os.LookupEnv("VILLIP_FROM"); !ok {
-		fmt.Fprintf(os.Stderr, "Missing VILLIP_FROM environment variable")
-		os.Exit(1)
+		log.Fatal("Missing VILLIP_FROM environment variable")
 	}
 	if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
-		fmt.Fprintf(os.Stderr, "Missing VILLIP_TO environment variable")
-		os.Exit(1)
+		log.Fatal("Missing VILLIP_TO environment variable")
 	}
 
 	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
 		for _, ip := range strings.Split(strings.Replace(restricteds, " ", "", -1), ",") {
 			_, ipnet, err := net.ParseCIDR(ip)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip)
-				os.Exit(1)
+				log.Fatal(fmt.Sprintf("\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip))
 			}
 			Restricted = append(Restricted, ipnet)
 		}
@@ -200,8 +195,7 @@ func main() {
 		}
 		to, ok = os.LookupEnv(fmt.Sprintf("VILLIP_TO_%d", i))
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Missing VILLIP_TO_%d environment variable", i)
-			os.Exit(1)
+			log.Fatal(fmt.Sprintf("Missing VILLIP_TO_%d environment variable", i))
 		}
 		Froms = append(Froms, from)
 		Tos = append(Tos, to)
@@ -210,8 +204,7 @@ func main() {
 
 	villipURL, ok := os.LookupEnv("VILLIP_URL")
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Missing VILLIP_URL environment variable")
-		os.Exit(1)
+		log.Fatal("Missing VILLIP_URL environment variable")
 	}
 
 	villipContenttypes, ok := os.LookupEnv("VILLIP_TYPES")
@@ -225,20 +218,20 @@ func main() {
 	}
 	port, err := strconv.Atoi(villipPort)
 	if err != nil || port > 65535 || 0 > port {
-		fmt.Fprintf(os.Stderr, "VILLIP_PORT environment variable (%s) is not a valid TCP port", villipPort)
-		os.Exit(1)
+		log.Fatal(fmt.Sprintf("VILLIP_PORT environment variable (%s) is not a valid TCP port", villipPort))
 	}
 
 	ContentTypes = strings.Split(strings.Replace(villipContenttypes, " ", "", -1), ",")
 
-	fmt.Printf("Listen on port %d\n", port)
-	fmt.Printf("Will filter responses fron %s\n", os.Getenv("VILLIP_URL"))
+	log.Info(fmt.Sprintf("Listen on port %d\n", port))
+	log.Info(fmt.Sprintf("Will filter responses from %s\n", villipURL))
 	if len(Restricted) != 0 {
-		fmt.Printf("Only for request from: %s \n", restricteds)
+		log.Info(fmt.Sprintf("Only for request from: %s \n", restricteds))
 	}
-	fmt.Printf("For content-type %s\nAnd replace:\n", ContentTypes)
+	log.Info(fmt.Sprintf("For content-type %s", ContentTypes))
+	log.Info("And replace:")
 	for i := range Froms {
-		fmt.Printf("   %s  by  %s\n", Froms[i], Tos[i])
+		log.Info(fmt.Sprintf("   %s  by  %s\n", Froms[i], Tos[i]))
 	}
 
 	u, _ := url.Parse(villipURL)
@@ -249,7 +242,6 @@ func main() {
 
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "villip close on error %v", err)
-		os.Exit(1)
+		log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
 	}
 }
