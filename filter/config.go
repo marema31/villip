@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"path/filepath"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -64,8 +65,10 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f := Filter{}
 
 	for _, r := range c.Replace {
-		f.froms = append(f.froms, r.From)
-		f.tos = append(f.tos, r.To)
+		from, _ := strconv.Unquote(r.From)
+		f.froms = append(f.froms, from)
+		to, _ := strconv.Unquote(r.To)
+		f.tos = append(f.tos, to)
 	}
 
 	if c.URL == "" {
