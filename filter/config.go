@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -16,11 +17,11 @@ type replacement struct {
 }
 
 type config struct {
-	ContentTypes []string      `yaml:"content-types"`
-	Port         int           `yaml:"port"`
-	Replace      []replacement `yaml:"replace"`
-	Restricted   []string      `yaml:"restricted"`
-	URL          string        `yaml:"url"`
+	ContentTypes []string      `yaml:"content-types" json:"content-types"`
+	Port         int           `yaml:"port" json:"port"`
+	Replace      []replacement `yaml:"replace" json:"replace"`
+	Restricted   []string      `yaml:"restricted" json:"restricted"`
+	URL          string        `yaml:"url" json:"url"`
 }
 
 //NewFromYAML instanciate a Filter object from the configuration file
@@ -38,6 +39,28 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
 		log.Fatalf("Cannot decode YAML: %v", err)
 	}
 
+	return newFromConfig(upLog, c)
+}
+
+//NewFromJSON instanciate a Filter object from the configuration file
+func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
+
+	log := upLog.WithField("file", filepath.Base(filePath))
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatalf("Cannot read file: %v", err)
+	}
+
+	var c config
+	err = json.Unmarshal(content, &c)
+	if err != nil {
+		log.Fatalf("Cannot decode JSON: %v", err)
+	}
+
+	return newFromConfig(upLog, c)
+}
+
+func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f := Filter{}
 
 	for _, r := range c.Replace {
@@ -70,7 +93,7 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
 	}
 
 	if c.Port > 65535 || 0 > c.Port {
-		upLog.Fatalf("%d is not a valid TCP port", c.Port)
+		log.Fatalf("%d is not a valid TCP port", c.Port)
 	}
 
 	f.port = fmt.Sprintf("%d", c.Port)

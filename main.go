@@ -39,6 +39,10 @@ func main() {
 				f = filter.NewFromYAML(upLog, filepath.Join(folderPath, file.Name()))
 				filters = append(filters, f)
 			}
+			if file.Mode().IsRegular() && (ext == ".json") {
+				f = filter.NewFromJSON(upLog, filepath.Join(folderPath, file.Name()))
+				filters = append(filters, f)
+			}
 		}
 	}
 	if len(filters) == 0 {

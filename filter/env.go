@@ -18,14 +18,15 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 
 	f := Filter{}
 
-	if from, ok = os.LookupEnv("VILLIP_FROM"); !ok {
-		upLog.Fatal("Missing VILLIP_FROM environment variable")
+	f.froms = []string{}
+	f.tos = []string{}
+	if from, ok = os.LookupEnv("VILLIP_FROM"); ok {
+		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
+			upLog.Fatal("Missing VILLIP_TO environment variable")
+		}
+		f.froms = append(f.froms, from)
+		f.tos = append(f.tos, to)
 	}
-	f.froms = []string{from}
-	if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
-		upLog.Fatal("Missing VILLIP_TO environment variable")
-	}
-	f.tos = []string{to}
 
 	f.restricted = []*net.IPNet{}
 	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
