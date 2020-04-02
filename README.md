@@ -24,8 +24,8 @@ VILLIP_RESTRICTED | no        | Comma separated list of networks authorized to u
 VILLIP_TYPES      | no        | Comma separated list of content type that will be filtered (by default text/html, text/css, application/javascript)
 VILLIP_URL        | yes       | Base url of the proxyfied site
 
-## YAML configuration files
-Each YAML files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
+## YAML/JSON configuration files
+Each YAML/JSON files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
 
 ```yaml
 ---
