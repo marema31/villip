@@ -16,6 +16,7 @@ Variable          | Mandatory |  Definition
 VILLIP_DEBUG      | no        | If present Villip will print debug logs
 VILLIP_FOLDER     | no        | Path to folder containing YAML configuration files, if present the other environment variables are no more mandatory
 VILLIP_FROM       | yes       | First string to search
+VILLIP_FORCE      | no        | If present Villip will ignore the content-type and filter all responses
 VILLIP_TO         | yes       | Replacement for the VILLIP_FROM string
 VILLIP_FROM_XX    | no        | XX string to search (XX = number starting at 1)
 VILLIP_TO_XX      | no        | Replacement for the corresponding VILLIP_FROM_XX string
@@ -30,6 +31,7 @@ Each YAML/JSON files in the folder pointed by VILLIP_FOLDER environment variable
 ```yaml
 ---
 port: 8081
+force: true
 url: "http://localhost:1234/url1"
 replace:
   - from: "book"
