@@ -1,0 +1,11 @@
+{
+  "port": 4448,
+  "url": "http://localhost:4443",
+  "content-types": [ "application/json" ],
+  "replace": [
+    {
+      "from": "\"host\":\"mysql\"",
+      "to": "\"host\":\"1.1.1.1\""
+    }
+  ]
+}

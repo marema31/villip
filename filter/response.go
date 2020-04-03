@@ -25,7 +25,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		return err
 	}
 
-	if !f.toFilter(requestLog, r) {
+	if !f.force && !f.toFilter(requestLog, r) {
 		return nil
 	}
 	requestLog.Debug("filtering")

@@ -18,54 +18,6 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 
 	f := Filter{}
 
-	f.froms = []string{}
-	f.tos = []string{}
-	if from, ok = os.LookupEnv("VILLIP_FROM"); ok {
-		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
-			upLog.Fatal("Missing VILLIP_TO environment variable")
-		}
-		f.froms = append(f.froms, from)
-		f.tos = append(f.tos, to)
-	}
-
-	f.restricted = []*net.IPNet{}
-	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
-		for _, ip := range strings.Split(strings.Replace(restricteds, " ", "", -1), ",") {
-			_, ipnet, err := net.ParseCIDR(ip)
-			if err != nil {
-				upLog.Fatalf("\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip)
-			}
-			f.restricted = append(f.restricted, ipnet)
-		}
-	}
-
-	i := 1
-	for {
-		from, ok = os.LookupEnv(fmt.Sprintf("VILLIP_FROM_%d", i))
-		if !ok {
-			break
-		}
-		to, ok = os.LookupEnv(fmt.Sprintf("VILLIP_TO_%d", i))
-		if !ok {
-			upLog.Fatalf("Missing VILLIP_TO_%d environment variable", i)
-		}
-		f.froms = append(f.froms, from)
-		f.tos = append(f.tos, to)
-		i++
-	}
-
-	url, ok := os.LookupEnv("VILLIP_URL")
-	if !ok {
-		upLog.Fatal("Missing VILLIP_URL environment variable")
-	}
-	f.url = url
-
-	contenttypes, ok := os.LookupEnv("VILLIP_TYPES")
-	if !ok {
-		contenttypes = "text/html, text/css, application/javascript"
-	}
-	f.contentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
-
 	villipPort, ok := os.LookupEnv("VILLIP_PORT")
 	if !ok {
 		villipPort = "8080"
@@ -79,6 +31,60 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 	f.port = villipPort
 
 	f.log = upLog.WithField("port", f.port)
+
+	f.force = false
+	if _, ok := os.LookupEnv("VILLIP_FORCE"); ok {
+		f.force = true
+	}
+
+	f.froms = []string{}
+	f.tos = []string{}
+	if from, ok = os.LookupEnv("VILLIP_FROM"); ok {
+		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
+			f.log.Fatal("Missing VILLIP_TO environment variable")
+		}
+		f.froms = append(f.froms, from)
+		f.tos = append(f.tos, to)
+	}
+
+	f.restricted = []*net.IPNet{}
+	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
+		for _, ip := range strings.Split(strings.Replace(restricteds, " ", "", -1), ",") {
+			_, ipnet, err := net.ParseCIDR(ip)
+			if err != nil {
+				f.log.Fatalf("\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip)
+			}
+			f.restricted = append(f.restricted, ipnet)
+		}
+	}
+
+	i := 1
+	for {
+		from, ok = os.LookupEnv(fmt.Sprintf("VILLIP_FROM_%d", i))
+		if !ok {
+			break
+		}
+		to, ok = os.LookupEnv(fmt.Sprintf("VILLIP_TO_%d", i))
+		if !ok {
+			f.log.Fatalf("Missing VILLIP_TO_%d environment variable", i)
+		}
+		f.froms = append(f.froms, from)
+		f.tos = append(f.tos, to)
+		i++
+	}
+
+	url, ok := os.LookupEnv("VILLIP_URL")
+	if !ok {
+		f.log.Fatal("Missing VILLIP_URL environment variable")
+	}
+	f.url = url
+
+	contenttypes, ok := os.LookupEnv("VILLIP_TYPES")
+	if !ok {
+		contenttypes = "text/html, text/css, application/javascript"
+	}
+	f.contentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
+
 	f.startLog()
 
 	return &f

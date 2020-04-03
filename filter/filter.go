@@ -12,6 +12,7 @@ import (
 
 //Filter proxifies an URL and filter the response
 type Filter struct {
+	force bool
 	//Froms strings to be replaced
 	froms []string
 	//Tos replacement string

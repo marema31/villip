@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"path/filepath"
-	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -19,6 +18,7 @@ type replacement struct {
 
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
+	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
@@ -64,11 +64,23 @@ func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
 func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f := Filter{}
 
+	if c.Port == 0 {
+		c.Port = 8080
+	}
+
+	if c.Port > 65535 || 0 > c.Port {
+		log.Fatalf("%d is not a valid TCP port", c.Port)
+	}
+
+	f.port = fmt.Sprintf("%d", c.Port)
+
+	f.log = log.WithField("port", f.port)
+
+	f.force = c.Force
+
 	for _, r := range c.Replace {
-		from, _ := strconv.Unquote(r.From)
-		f.froms = append(f.froms, from)
-		to, _ := strconv.Unquote(r.To)
-		f.tos = append(f.tos, to)
+		f.froms = append(f.froms, r.From)
+		f.tos = append(f.tos, r.To)
 	}
 
 	if c.URL == "" {
@@ -91,17 +103,6 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 		f.contentTypes = append(f.contentTypes, []string{"text/html", "text/css", "application/javascript"}...)
 	}
 
-	if c.Port == 0 {
-		c.Port = 8080
-	}
-
-	if c.Port > 65535 || 0 > c.Port {
-		log.Fatalf("%d is not a valid TCP port", c.Port)
-	}
-
-	f.port = fmt.Sprintf("%d", c.Port)
-
-	f.log = log.WithField("port", f.port)
 	f.startLog()
 
 	return &f
