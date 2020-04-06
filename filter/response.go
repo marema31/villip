@@ -3,15 +3,65 @@ package filter
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
+
+func generateID() (string, error) {
+	r := make([]byte, 12)
+	_, err := rand.Read(r)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(r), nil
+}
+
+func (f *Filter) dumpResponse(requestID string, header http.Header, body string) string {
+	fileName := fmt.Sprintf("%s.filtered", requestID)
+	if requestID == "" {
+		rID, err := generateID()
+		if err != nil {
+			f.log.Fatalf("Failed to generate requestId: %v", err)
+		}
+		requestID = rID
+		fileName = fmt.Sprintf("%s.original", requestID)
+	}
+
+	fileName = filepath.Join(f.dumpFolder, fileName)
+	file, err := os.Create(fileName)
+	if err != nil {
+		f.log.Fatalf("Failed to create %s: %v", fileName, err)
+	}
+	defer file.Close()
+
+	for name, values := range header {
+		for _, value := range values {
+			if _, err := file.WriteString(fmt.Sprintf("%s: %s\n", name, value)); err != nil {
+				f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
+			}
+		}
+	}
+
+	if _, err := file.WriteString("\n"); err != nil {
+		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
+	}
+	if _, err := file.WriteString(body); err != nil {
+		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
+	}
+
+	return requestID
+}
 
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary
 func (f *Filter) UpdateResponse(r *http.Response) error {
@@ -47,9 +97,17 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	s := string(b)
+
+	requestID := ""
+	if f.dumpFolder != "" {
+		requestID = f.dumpResponse(requestID, r.Header, s)
+	}
+
 	for i := range f.froms {
 		s = strings.Replace(s, f.froms[i], f.tos[i], -1)
 	}
+
+	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
 	location := r.Header.Get("Location")
 	if location != "" {
@@ -59,6 +117,10 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		}
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
+	}
+
+	if requestID != "" {
+		f.dumpResponse(requestID, r.Header, s)
 	}
 
 	switch r.Header.Get("Content-Encoding") {

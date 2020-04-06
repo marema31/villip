@@ -24,6 +24,7 @@ type Filter struct {
 	url        string
 	port       string
 	log        *logrus.Entry
+	dumpFolder string
 }
 
 func (f *Filter) startLog() {

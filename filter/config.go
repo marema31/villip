@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,7 @@ type replacement struct {
 
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
+	DumpFolder   string        `yaml:"dump-folder" json:"dump-folder"`
 	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
@@ -76,6 +78,15 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.log = log.WithField("port", f.port)
 
+	if c.DumpFolder != "" {
+		f.dumpFolder = c.DumpFolder
+		if _, err := os.Stat(f.dumpFolder); !os.IsNotExist(err) {
+			err = os.MkdirAll(f.dumpFolder, os.ModePerm)
+			if err != nil {
+				f.log.Fatalf("Failed to create the dump folder %s: %v", f.dumpFolder, err)
+			}
+		}
+	}
 	f.force = c.Force
 
 	for _, r := range c.Replace {
@@ -92,7 +103,7 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	for _, ip := range c.Restricted {
 		_, ipnet, err := net.ParseCIDR(ip)
 		if err != nil {
-			log.Fatal(fmt.Sprintf("\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip))
+			log.Fatal(fmt.Sprintf("\"%s\" in restricted parameter is not a valid CIDR", ip))
 		}
 		f.restricted = append(f.restricted, ipnet)
 	}
