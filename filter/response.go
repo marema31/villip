@@ -3,64 +3,34 @@ package filter
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
-func generateID() (string, error) {
-	r := make([]byte, 12)
-	_, err := rand.Read(r)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(r), nil
-}
-
-func (f *Filter) dumpResponse(requestID string, header http.Header, body string) string {
-	fileName := fmt.Sprintf("%s.filtered", requestID)
-	if requestID == "" {
-		rID, err := generateID()
-		if err != nil {
-			f.log.Fatalf("Failed to generate requestId: %v", err)
-		}
-		requestID = rID
-		fileName = fmt.Sprintf("%s.original", requestID)
-	}
-
-	fileName = filepath.Join(f.dumpFolder, fileName)
-	file, err := os.Create(fileName)
-	if err != nil {
-		f.log.Fatalf("Failed to create %s: %v", fileName, err)
-	}
-	defer file.Close()
-
-	for name, values := range header {
-		for _, value := range values {
-			if _, err := file.WriteString(fmt.Sprintf("%s: %s\n", name, value)); err != nil {
-				f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
+func (f *Filter) do(URL string, s string) string {
+	for _, r := range f.replace {
+		if len(r.urls) != 0 {
+			found := false
+			for _, reg := range r.urls {
+				if reg.MatchString(URL) {
+					found = true
+					break
+				}
 			}
+			if !found {
+				continue
+			}
+
 		}
+		s = strings.Replace(s, r.from, r.to, -1)
 	}
-
-	if _, err := file.WriteString("\n"); err != nil {
-		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
-	}
-	if _, err := file.WriteString(body); err != nil {
-		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
-	}
-
-	return requestID
+	return s
 }
 
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary
@@ -98,29 +68,27 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	s := string(b)
 
+	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
+
 	requestID := ""
-	if f.dumpFolder != "" {
-		requestID = f.dumpResponse(requestID, r.Header, s)
+	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
+		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
 
-	for i := range f.froms {
-		s = strings.Replace(s, f.froms[i], f.tos[i], -1)
-	}
+	s = f.do(requestURL, s)
 
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
 	location := r.Header.Get("Location")
 	if location != "" {
 		origLocation := location
-		for i := range f.froms {
-			location = strings.Replace(location, f.froms[i], f.tos[i], -1)
-		}
+		location = f.do(requestURL, location)
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
 	}
 
 	if requestID != "" {
-		f.dumpResponse(requestID, r.Header, s)
+		f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
 
 	switch r.Header.Get("Content-Encoding") {

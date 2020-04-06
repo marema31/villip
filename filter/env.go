@@ -14,6 +14,7 @@ import (
 func NewFromEnv(upLog *logrus.Entry) *Filter {
 	var ok bool
 	var from, to, restricteds string
+	urls := []string{}
 
 	var c config
 
@@ -30,7 +31,7 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 	}
 
 	if dumpFolder, ok := os.LookupEnv("VILLIP_DUMPFOLDER"); ok {
-		c.DumpFolder = dumpFolder
+		c.Dump.Folder = dumpFolder
 	}
 
 	c.Replace = []replacement{}
@@ -38,7 +39,10 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
 			log.Fatal("Missing VILLIP_TO environment variable")
 		}
-		c.Replace = append(c.Replace, replacement{From: from, To: to})
+		if urlList, ok := os.LookupEnv("VILLIP_FOR"); ok {
+			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+		}
+		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
 	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
@@ -55,7 +59,11 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 		if !ok {
 			log.Fatalf("Missing VILLIP_TO_%d environment variable", i)
 		}
-		c.Replace = append(c.Replace, replacement{From: from, To: to})
+		urls = []string{}
+		if urlList, ok := os.LookupEnv(fmt.Sprintf("VILLIP_FOR_%d", i)); ok {
+			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+		}
+		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
 	url, ok := os.LookupEnv("VILLIP_URL")
@@ -66,6 +74,10 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 
 	if contenttypes, ok := os.LookupEnv("VILLIP_TYPES"); ok {
 		c.ContentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
+	}
+
+	if dumpURLs, ok := os.LookupEnv("VILLIP_DUMPURLS"); ok {
+		c.Dump.URLs = strings.Split(strings.Replace(dumpURLs, " ", "", -1), ",")
 	}
 
 	return newFromConfig(upLog, c)

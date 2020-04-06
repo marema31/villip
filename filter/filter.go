@@ -6,25 +6,28 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 
 	"github.com/sirupsen/logrus"
 )
 
+type replaceParameters struct {
+	from string
+	to   string
+	urls []*regexp.Regexp
+}
+
 //Filter proxifies an URL and filter the response
 type Filter struct {
-	force bool
-	//Froms strings to be replaced
-	froms []string
-	//Tos replacement string
-	tos []string
-	//ContentTypes list of content types that will be filtered
+	force        bool
+	replace      []replaceParameters
 	contentTypes []string
-	//Restricted list of net ranges allowed to connect to villip
-	restricted []*net.IPNet
-	url        string
-	port       string
-	log        *logrus.Entry
-	dumpFolder string
+	restricted   []*net.IPNet
+	url          string
+	port         string
+	log          *logrus.Entry
+	dumpFolder   string
+	dumpURLs     []*regexp.Regexp
 }
 
 func (f *Filter) startLog() {
@@ -35,10 +38,16 @@ func (f *Filter) startLog() {
 	}
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
 	f.log.Info("And replace:")
-	for i := range f.froms {
-		f.log.Info(fmt.Sprintf("   %s  by  %s", f.froms[i], f.tos[i]))
+	for _, r := range f.replace {
+		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
+		if len(r.urls) != 0 {
+			var us []string
+			for _, u := range r.urls {
+				us = append(us, u.String())
+			}
+			f.log.Info(fmt.Sprintf("    for %v", us))
+		}
 	}
-
 }
 
 //Serve starts a filtering http proxy

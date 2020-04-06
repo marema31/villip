@@ -7,19 +7,25 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 type replacement struct {
-	From string `yaml:"from"`
-	To   string `yaml:"to"`
+	From string   `yaml:"from" json:"from"`
+	To   string   `yaml:"to" json:"to"`
+	Urls []string `yaml:"urls" json:"urls"`
 }
 
+type dump struct {
+	Folder string   `yaml:"folder" json:"folder"`
+	URLs   []string `yaml:"urls" json:"urls"`
+}
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
-	DumpFolder   string        `yaml:"dump-folder" json:"dump-folder"`
+	Dump         dump          `yaml:"dump" json:"dump"`
 	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
@@ -78,8 +84,8 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.log = log.WithField("port", f.port)
 
-	if c.DumpFolder != "" {
-		f.dumpFolder = c.DumpFolder
+	if c.Dump.Folder != "" {
+		f.dumpFolder = c.Dump.Folder
 		if _, err := os.Stat(f.dumpFolder); !os.IsNotExist(err) {
 			err = os.MkdirAll(f.dumpFolder, os.ModePerm)
 			if err != nil {
@@ -87,11 +93,30 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 			}
 		}
 	}
+
+	f.dumpURLs = []*regexp.Regexp{}
+	for _, reg := range c.Dump.URLs {
+		r, err := regexp.Compile(reg)
+		if err != nil {
+			f.log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
+		}
+		f.dumpURLs = append(f.dumpURLs, r)
+	}
+
 	f.force = c.Force
 
+	f.replace = []replaceParameters{}
 	for _, r := range c.Replace {
-		f.froms = append(f.froms, r.From)
-		f.tos = append(f.tos, r.To)
+		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
+
+		for _, reg := range r.Urls {
+			r, err := regexp.Compile(reg)
+			if err != nil {
+				f.log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
+			}
+			p.urls = append(p.urls, r)
+		}
+		f.replace = append(f.replace, p)
 	}
 
 	if c.URL == "" {
