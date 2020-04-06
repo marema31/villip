@@ -3,7 +3,6 @@ package filter
 import (
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -15,47 +14,39 @@ import (
 func NewFromEnv(upLog *logrus.Entry) *Filter {
 	var ok bool
 	var from, to, restricteds string
+	urls := []string{}
 
-	f := Filter{}
+	var c config
 
-	villipPort, ok := os.LookupEnv("VILLIP_PORT")
-	if !ok {
-		villipPort = "8080"
-	}
-
+	villipPort, _ := os.LookupEnv("VILLIP_PORT")
 	port, err := strconv.Atoi(villipPort)
-	if err != nil || port > 65535 || 0 > port {
-		log.Fatal(fmt.Sprintf("VILLIP_PORT environment variable (%s) is not a valid TCP port", villipPort))
+	if err != nil {
+		log.Fatalf("%s is not a valid TCP port", villipPort)
 	}
+	c.Port = port
 
-	f.port = villipPort
-
-	f.log = upLog.WithField("port", f.port)
-
-	f.force = false
+	c.Force = false
 	if _, ok := os.LookupEnv("VILLIP_FORCE"); ok {
-		f.force = true
+		c.Force = true
 	}
 
-	f.froms = []string{}
-	f.tos = []string{}
+	if dumpFolder, ok := os.LookupEnv("VILLIP_DUMPFOLDER"); ok {
+		c.Dump.Folder = dumpFolder
+	}
+
+	c.Replace = []replacement{}
 	if from, ok = os.LookupEnv("VILLIP_FROM"); ok {
 		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
-			f.log.Fatal("Missing VILLIP_TO environment variable")
+			log.Fatal("Missing VILLIP_TO environment variable")
 		}
-		f.froms = append(f.froms, from)
-		f.tos = append(f.tos, to)
+		if urlList, ok := os.LookupEnv("VILLIP_FOR"); ok {
+			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+		}
+		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
-	f.restricted = []*net.IPNet{}
 	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
-		for _, ip := range strings.Split(strings.Replace(restricteds, " ", "", -1), ",") {
-			_, ipnet, err := net.ParseCIDR(ip)
-			if err != nil {
-				f.log.Fatalf("\"%s\" in VILLIP_RESTRICTED environment variable is not a valid CIDR", ip)
-			}
-			f.restricted = append(f.restricted, ipnet)
-		}
+		c.Restricted = strings.Split(strings.Replace(restricteds, " ", "", -1), ",")
 	}
 
 	i := 1
@@ -66,26 +57,28 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 		}
 		to, ok = os.LookupEnv(fmt.Sprintf("VILLIP_TO_%d", i))
 		if !ok {
-			f.log.Fatalf("Missing VILLIP_TO_%d environment variable", i)
+			log.Fatalf("Missing VILLIP_TO_%d environment variable", i)
 		}
-		f.froms = append(f.froms, from)
-		f.tos = append(f.tos, to)
-		i++
+		urls = []string{}
+		if urlList, ok := os.LookupEnv(fmt.Sprintf("VILLIP_FOR_%d", i)); ok {
+			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+		}
+		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
 	url, ok := os.LookupEnv("VILLIP_URL")
 	if !ok {
-		f.log.Fatal("Missing VILLIP_URL environment variable")
+		log.Fatal("Missing VILLIP_URL environment variable")
 	}
-	f.url = url
+	c.URL = url
 
-	contenttypes, ok := os.LookupEnv("VILLIP_TYPES")
-	if !ok {
-		contenttypes = "text/html, text/css, application/javascript"
+	if contenttypes, ok := os.LookupEnv("VILLIP_TYPES"); ok {
+		c.ContentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
 	}
-	f.contentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
 
-	f.startLog()
+	if dumpURLs, ok := os.LookupEnv("VILLIP_DUMPURLS"); ok {
+		c.Dump.URLs = strings.Split(strings.Replace(dumpURLs, " ", "", -1), ",")
+	}
 
-	return &f
+	return newFromConfig(upLog, c)
 }

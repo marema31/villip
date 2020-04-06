@@ -13,6 +13,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func (f *Filter) do(URL string, s string) string {
+	for _, r := range f.replace {
+		if len(r.urls) != 0 {
+			found := false
+			for _, reg := range r.urls {
+				if reg.MatchString(URL) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+
+		}
+		s = strings.Replace(s, r.from, r.to, -1)
+	}
+	return s
+}
+
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary
 func (f *Filter) UpdateResponse(r *http.Response) error {
 
@@ -47,18 +67,28 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	s := string(b)
-	for i := range f.froms {
-		s = strings.Replace(s, f.froms[i], f.tos[i], -1)
+
+	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
+
+	requestID := ""
+	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
+		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
+
+	s = f.do(requestURL, s)
+
+	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
 	location := r.Header.Get("Location")
 	if location != "" {
 		origLocation := location
-		for i := range f.froms {
-			location = strings.Replace(location, f.froms[i], f.tos[i], -1)
-		}
+		location = f.do(requestURL, location)
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
+	}
+
+	if requestID != "" {
+		f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
 
 	switch r.Header.Get("Content-Encoding") {
