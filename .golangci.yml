@@ -28,8 +28,7 @@ linters-settings:
     min-complexity: 40
   misspell:
     ignore-words:
-      - creater
-      - creature
+      - restricteds
 
   funlen:
     lines: 100

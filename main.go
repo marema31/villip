@@ -17,11 +17,13 @@ func main() {
 	var f *filter.Filter
 
 	log.SetLevel(logrus.InfoLevel)
+
 	if _, ok := os.LookupEnv("VILLIP_DEBUG"); ok {
 		log.SetLevel(logrus.DebugLevel)
 	}
 
 	upLog := log.WithField("app", "villip")
+
 	if _, ok := os.LookupEnv("VILLIP_URL"); ok {
 		f = filter.NewFromEnv(upLog)
 		filters = append(filters, f)
@@ -39,12 +41,14 @@ func main() {
 				f = filter.NewFromYAML(upLog, filepath.Join(folderPath, file.Name()))
 				filters = append(filters, f)
 			}
+
 			if file.Mode().IsRegular() && (ext == ".json") {
 				f = filter.NewFromJSON(upLog, filepath.Join(folderPath, file.Name()))
 				filters = append(filters, f)
 			}
 		}
 	}
+
 	if len(filters) == 0 {
 		log.Fatal("No filter configuration provided")
 	}
@@ -52,7 +56,8 @@ func main() {
 	for _, f = range filters {
 		go f.Serve()
 	}
+
 	for {
-		time.Sleep(time.Hour * 24)
+		time.Sleep(time.Hour * 24) //nolint: gomnd
 	}
 }

@@ -17,7 +17,7 @@ type replaceParameters struct {
 	urls []*regexp.Regexp
 }
 
-//Filter proxifies an URL and filter the response
+//Filter proxifies an URL and filter the response.
 type Filter struct {
 	force        bool
 	replace      []replaceParameters
@@ -33,24 +33,30 @@ type Filter struct {
 func (f *Filter) startLog() {
 	f.log.Info(fmt.Sprintf("Listen on port %s", f.port))
 	f.log.Info(fmt.Sprintf("Will filter responses from %s", f.url))
+
 	if len(f.restricted) != 0 {
 		f.log.Info(fmt.Sprintf("Only for request from: %s ", f.restricted))
 	}
+
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
 	f.log.Info("And replace:")
+
 	for _, r := range f.replace {
 		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
+
 		if len(r.urls) != 0 {
 			var us []string
+
 			for _, u := range r.urls {
 				us = append(us, u.String())
 			}
+
 			f.log.Info(fmt.Sprintf("    for %v", us))
 		}
 	}
 }
 
-//Serve starts a filtering http proxy
+//Serve starts a filtering http proxy.
 func (f *Filter) Serve() {
 	u, _ := url.Parse(f.url)
 	proxy := httputil.NewSingleHostReverseProxy(u)

@@ -13,29 +13,31 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f *Filter) do(URL string, s string) string {
+func (f *Filter) do(url string, s string) string {
 	for _, r := range f.replace {
 		if len(r.urls) != 0 {
 			found := false
+
 			for _, reg := range r.urls {
-				if reg.MatchString(URL) {
+				if reg.MatchString(url) {
 					found = true
 					break
 				}
 			}
+
 			if !found {
 				continue
 			}
-
 		}
+
 		s = strings.Replace(s, r.from, r.to, -1)
 	}
+
 	return s
 }
 
-//UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary
+//UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
-
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
 	requestLog.Debug("Request")
@@ -48,11 +50,13 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	if !f.force && !f.toFilter(requestLog, r) {
 		return nil
 	}
+
 	requestLog.Debug("filtering")
 
 	var b []byte
 
 	var body io.ReadCloser
+
 	switch r.Header.Get("Content-Encoding") {
 	case "gzip":
 		body, _ = gzip.NewReader(r.Body)
@@ -83,6 +87,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	if location != "" {
 		origLocation := location
 		location = f.do(requestURL, location)
+
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
 	}
@@ -106,6 +111,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		if err != nil {
 			return err
 		}
+
 		err = compressed.Close()
 		if err != nil {
 			return err
@@ -124,6 +130,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	return nil
 }
 
+//nolint: nestif
 func (f *Filter) isAuthorized(log *logrus.Entry, r *http.Response) (bool, error) {
 	if len(f.restricted) != 0 {
 		sip, _, err := net.SplitHostPort(r.Request.RemoteAddr)
@@ -135,39 +142,47 @@ func (f *Filter) isAuthorized(log *logrus.Entry, r *http.Response) (bool, error)
 		ip := net.ParseIP(sip)
 		if !ip.IsLoopback() {
 			seen := false
+
 			for _, ipnet := range f.restricted {
 				if ipnet.Contains(ip) {
 					seen = true
 					break
 				}
 			}
+
 			if !seen {
 				log.WithFields(logrus.Fields{"source": ip}).Debug("forbidden from this IP")
-				buf := bytes.NewBufferString("Access forbiden from this IP")
+
+				buf := bytes.NewBufferString("Access forbidden from this IP")
 				r.Body = ioutil.NopCloser(buf)
 				r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
-				r.StatusCode = 403
+				r.StatusCode = http.StatusForbidden
+
 				return false, nil
 			}
 		}
 	}
+
 	return true, nil
 }
 
 func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
-	if r.StatusCode == 200 {
+	if r.StatusCode == http.StatusOK {
 		currentType := r.Header.Get("Content-Type")
+
 		for _, testedType := range f.contentTypes {
 			if strings.Contains(currentType, testedType) {
 				return true
 			}
 		}
-		log.WithFields(logrus.Fields{"type": currentType}).Debug("... skipping type")
-		return false
 
-	} else if r.StatusCode != 302 && r.StatusCode != 301 {
+		log.WithFields(logrus.Fields{"type": currentType}).Debug("... skipping type")
+
+		return false
+	} else if r.StatusCode != http.StatusFound && r.StatusCode != http.StatusMovedPermanently {
 		log.Debug("... skipping status")
 		return false
 	}
+
 	return true
 }
