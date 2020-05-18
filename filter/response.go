@@ -53,24 +53,10 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.Debug("filtering")
 
-	var b []byte
-
-	var body io.ReadCloser
-
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		body, _ = gzip.NewReader(r.Body)
-		//		defer body.Close()
-	default:
-		body = r.Body
-	}
-
-	b, err = ioutil.ReadAll(body)
+	s, err := f.readBody(r)
 	if err != nil {
 		return err
 	}
-
-	s := string(b)
 
 	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
 
@@ -83,14 +69,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
-	location := r.Header.Get("Location")
-	if location != "" {
-		origLocation := location
-		location = f.do(requestURL, location)
-
-		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
-		r.Header.Set("Location", location)
-	}
+	f.location(requestLog, r, requestURL)
 
 	if requestID != "" {
 		f.dumpResponse(requestID, requestURL, r.Header, s)
@@ -98,27 +77,12 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	switch r.Header.Get("Content-Encoding") {
 	case "gzip":
-		var w bytes.Buffer
-
-		compressed := gzip.NewWriter(&w)
-
-		_, err := compressed.Write([]byte(s))
+		w, err := f.compress(s)
 		if err != nil {
 			return err
 		}
 
-		err = compressed.Flush()
-		if err != nil {
-			return err
-		}
-
-		err = compressed.Close()
-		if err != nil {
-			return err
-		}
-
-		r.Body = ioutil.NopCloser(&w)
-
+		r.Body = ioutil.NopCloser(w)
 		r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
 
 	default:
@@ -185,4 +149,57 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 	}
 
 	return true
+}
+
+func (f *Filter) readBody(r *http.Response) (string, error) {
+	var body io.ReadCloser
+
+	switch r.Header.Get("Content-Encoding") {
+	case "gzip":
+		body, _ = gzip.NewReader(r.Body)
+		//		defer body.Close()
+	default:
+		body = r.Body
+	}
+
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), err
+}
+
+func (f *Filter) compress(s string) (*bytes.Buffer, error) {
+	var w bytes.Buffer
+
+	compressed := gzip.NewWriter(&w)
+
+	_, err := compressed.Write([]byte(s))
+	if err != nil {
+		return nil, err
+	}
+
+	err = compressed.Flush()
+	if err != nil {
+		return nil, err
+	}
+
+	err = compressed.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return &w, nil
+}
+
+func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL string) {
+	location := r.Header.Get("Location")
+	if location != "" {
+		origLocation := location
+		location = f.do(requestURL, location)
+
+		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
+		r.Header.Set("Location", location)
+	}
 }
