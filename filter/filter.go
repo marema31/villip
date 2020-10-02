@@ -79,8 +79,6 @@ func (f *Filter) Serve() {
 	mx := http.NewServeMux()
 	mx.Handle("/", proxy)
 
-	// mx2 := http.NewServeMux()
-	// mx2.HandleFunc("/", handleRequestAndFilter)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", f.port), mx)
 	if err != nil {

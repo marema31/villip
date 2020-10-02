@@ -67,7 +67,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	s = f.do(requestURL, s)
-
+	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug(s)
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
 	f.location(requestLog, r, requestURL)
@@ -98,6 +98,8 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 func (f *Filter) UpdateRequest(r *http.Request) {
 	u, _ := url.Parse(f.url)
 	r.URL.Host = u.Host
+	f.log.Info(fmt.Sprintf("%s", string(u.Host)))
+	r.Host = u.Host
 	r.URL.Scheme = "http"
 	data, err := httputil.DumpRequest(r, false)
 	if err != nil {
