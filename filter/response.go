@@ -9,12 +9,13 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
+	"net/http/httputil"
+	"net/url"
 	"github.com/sirupsen/logrus"
 )
 
 func (f *Filter) do(url string, s string) string {
-	for _, r := range f.replace {
+	for _, r := range f.response.Replace {
 		if len(r.urls) != 0 {
 			found := false
 
@@ -92,6 +93,18 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	return nil
+}
+
+func (f *Filter) UpdateRequest(r *http.Request) {
+	u, _ := url.Parse(f.url)
+	r.URL.Host = u.Host
+	r.URL.Scheme = "http"
+	data, err := httputil.DumpRequest(r, false)
+	if err != nil {
+		f.log.Error(fmt.Printf("Error"))
+	}
+	f.log.Info(fmt.Sprintf("%s", string(data)))
+	//r.Header.Set("X-OVH-Gateway-Source", "titi")
 }
 
 //nolint: nestif

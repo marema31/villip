@@ -23,15 +23,36 @@ type dump struct {
 	Folder string   `yaml:"folder" json:"folder"`
 	URLs   []string `yaml:"urls" json:"urls"`
 }
+
+type header struct {
+	Name  string  `yaml:"name" json:"name"`
+	Value string  `yaml:"value" json:"value"`
+	Force bool	  `yaml:"force" json:"force"`
+}
+
+type responseTmp struct {
+	Replace  []replacement `yaml:"replace" json:"replace"`
+	Header	 []header	   `yaml:"header" json:"header"`
+}
+
+type requestTmp struct {
+	Replace  []replacement `yaml:"replace" json:"replace"`
+	Header	 []header	   `yaml:"header" json:"header"`
+}
+
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
 	Dump         dump          `yaml:"dump" json:"dump"`
 	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
+	Request	     requestTmp	   `yaml:"request" json:"request"`
+	Response	 responseTmp   `yaml:"response" json:"response"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
 	URL          string        `yaml:"url" json:"url"`
 }
+
+
 
 //NewFromYAML instantiate a Filter object from the configuration file.
 func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
@@ -48,7 +69,6 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
 	if err != nil {
 		log.Fatalf("Cannot decode YAML: %v", err)
 	}
-
 	return newFromConfig(upLog, c)
 }
 
@@ -109,9 +129,10 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.force = c.Force
 
-	f.replace = []replaceParameters{}
+	f.response.Replace = []replaceParameters{}
 
-	for _, r := range c.Replace {
+	//to be refctored with a function
+	for _, r := range c.Response.Replace {
 		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
 
 		for _, reg := range r.Urls {
@@ -123,7 +144,27 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 			p.urls = append(p.urls, r)
 		}
 
-		f.replace = append(f.replace, p)
+		f.response.Replace = append(f.response.Replace, p)
+	}
+
+	if c.URL == "" {
+		log.Fatal("Missing url variable")
+	}
+
+	f.request.Replace = []replaceParameters{}
+	for _, r := range c.Request.Replace {
+		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
+
+		for _, reg := range r.Urls {
+			r, err := regexp.Compile(reg)
+			if err != nil {
+				f.log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
+			}
+
+			p.urls = append(p.urls, r)
+		}
+
+		f.request.Replace = append(f.request.Replace,  p)
 	}
 
 	if c.URL == "" {
