@@ -18,19 +18,19 @@ type replaceParameters struct {
 }
 
 type response struct {
-	Replace  []replaceParameters `yaml:"replace" json:"replace"`
-	Header	 []header	   `yaml:"header" json:"header"`
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
 }
 
 type request struct {
-	Replace  []replaceParameters `yaml:"replace" json:"replace"`
-	Header	 []header	   `yaml:"header" json:"header"`
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
 }
 
 //Filter proxifies an URL and filter the response.
 type Filter struct {
 	force        bool
-	response	 response
+	response     response
 	request      request
 	contentTypes []string
 	restricted   []*net.IPNet
@@ -67,7 +67,6 @@ func (f *Filter) startLog() {
 	}
 }
 
-
 //Serve starts a filtering http proxy.
 func (f *Filter) Serve() {
 	u, _ := url.Parse(f.url)
@@ -78,7 +77,6 @@ func (f *Filter) Serve() {
 
 	mx := http.NewServeMux()
 	mx.Handle("/", proxy)
-
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", f.port), mx)
 	if err != nil {
