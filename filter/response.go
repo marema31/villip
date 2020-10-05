@@ -37,11 +37,12 @@ func (f *Filter) do(url string, s string) string {
 	return s
 }
 
+
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
-	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "status": r.StatusCode, "source": r.Request.RemoteAddr})
+	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
-	requestLog.Debug("Request")
+	requestLog.Debug("Response")
 
 	authorized, err := f.isAuthorized(requestLog, r)
 	if err != nil || !authorized {
@@ -65,9 +66,8 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
 		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
-
 	s = f.do(requestURL, s)
-	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug(s)
+
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
 	f.location(requestLog, r, requestURL)
@@ -91,24 +91,68 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		r.Body = ioutil.NopCloser(buf)
 		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 	}
-
+	if len(f.response.Header) != 0 {
+		r.Header, err = f.headerReplace(requestLog, r.Header, "response")
+	}
 	return nil
 }
 
 func (f *Filter) UpdateRequest(r *http.Request) {
+	requestLog := f.log.WithFields(logrus.Fields{"url": r.URL.String(),"action" : "request" ,"source": r.RemoteAddr})
+	requestLog.Debug("Request")
 	u, _ := url.Parse(f.url)
 	r.URL.Host = u.Host
-	f.log.Info(fmt.Sprintf("%s", string(u.Host)))
 	r.Host = u.Host
 	r.URL.Scheme = "http"
 	data, err := httputil.DumpRequest(r, false)
 	if err != nil {
 		f.log.Error(fmt.Printf("Error"))
 	}
-	f.log.Info(fmt.Sprintf("%s", string(data)))
-	//r.Header.Set("X-OVH-Gateway-Source", "titi")
+	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
+	
+	if r.Body != nil {
+		s, err := f.readBodyBis(r.Body, r.Header)
+		if err != nil {
+			f.log.Error(err)
+		}
+		switch r.Header.Get("Content-Encoding") {
+		case "gzip":
+			w, _ := f.compress(s)
+	
+			r.Body = ioutil.NopCloser(w)
+			r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
+	
+		default:
+			buf := bytes.NewBufferString(s)
+			r.Body = ioutil.NopCloser(buf)
+			r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
+		}
+	}
+	if len(f.request.Header) != 0 {
+		r.Header, err = f.headerReplace(requestLog, r.Header, "request")
+	}	
 }
 
+func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http.Header, error) {
+	log.Debug("Checking if need to replace header")
+	var header []header
+
+	if a == "request" {
+		header = f.request.Header
+	} else if a == "response" {
+		header = f.response.Header
+	}
+
+	for _, head := range header {
+		if (h[head.Name] == nil || h[head.Name][0] == "" || head.Force) {
+			h.Set(head.Name, head.Value)
+			log.Debug(fmt.Sprintf("set header %s with value :  %s",head.Name , head.Value))
+			}
+	}
+	return h, nil
+}
+
+	
 //nolint: nestif
 func (f *Filter) isAuthorized(log *logrus.Entry, r *http.Response) (bool, error) {
 	if len(f.restricted) != 0 {
@@ -175,6 +219,25 @@ func (f *Filter) readBody(r *http.Response) (string, error) {
 		//		defer body.Close()
 	default:
 		body = r.Body
+	}
+
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), err
+}
+
+func (f *Filter) readBodyBis(bod io.ReadCloser, head http.Header) (string, error) {
+	var body io.ReadCloser
+
+	switch head.Get("Content-Encoding") {
+	case "gzip":
+		body, _ = gzip.NewReader(bod)
+		//		defer body.Close()
+	default:
+		body = bod
 	}
 
 	b, err := ioutil.ReadAll(body)
