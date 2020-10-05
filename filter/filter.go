@@ -50,9 +50,26 @@ func (f *Filter) startLog() {
 	}
 
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
-	f.log.Info("And replace:")
 
-	for _, r := range f.response.Replace {
+	f.printBodyReplaceInLog("request")
+	f.printHeaderReplaceInLog("request")
+	f.printBodyReplaceInLog("response")
+	f.printHeaderReplaceInLog("response")
+}
+
+//print in logs what will be replaced for response or request
+func (f *Filter) printBodyReplaceInLog(action string) {
+	f.log.Info(fmt.Sprintf("And replace in %s body:", action))
+
+	var rep = []replaceParameters{}
+
+	if action == "request" {
+		rep = f.request.Replace
+	} else if action == "response" {
+		rep = f.response.Replace
+	}
+
+	for _, r := range rep {
 		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
 
 		if len(r.urls) != 0 {
@@ -66,6 +83,34 @@ func (f *Filter) startLog() {
 		}
 	}
 }
+
+func (f *Filter) printHeaderReplaceInLog(action string) {
+	var head = []header{}
+
+	if action == "request" {
+		head = f.request.Header
+	} else if action == "response" {
+		head = f.response.Header
+	}
+
+	if len(head) > 0 {
+		f.log.Info(fmt.Sprintf("And set/replace in %s Header:", action))
+		for _, h := range head {
+			var m = fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
+			if h.Force {
+				m = m + " (force = true -> in all the cases)"
+				
+			} else {
+				m = m + " (force = false -> only if value is empty or header undefined)"
+			}
+			f.log.Info(m)
+		}
+	}
+
+	
+
+}
+
 
 //Serve starts a filtering http proxy.
 func (f *Filter) Serve() {
