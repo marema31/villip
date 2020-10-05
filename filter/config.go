@@ -148,7 +148,7 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	var responseReplace = []replacement{}
 	if len(c.Response.Replace) > 0 && len(c.Replace) > 0 {
-		f.log.Fatalf("Please check your config file you cannot set a reponse and a replace at the same time")
+		f.log.Fatalf("Please check your config file you cannot set a response and a replace at the same time")
 	} else if (len(c.Replace)) > 0 {
 		responseReplace = c.Replace
 	} else if (len(c.Response.Replace)) > 0 {
