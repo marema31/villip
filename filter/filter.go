@@ -7,7 +7,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
-
 	"github.com/sirupsen/logrus"
 )
 
