@@ -57,7 +57,6 @@ func (f *Filter) startLog() {
 	f.printHeaderReplaceInLog("response")
 }
 
-//print in logs what will be replaced for response or request
 func (f *Filter) printBodyReplaceInLog(action string) {
 	f.log.Info(fmt.Sprintf("And replace in %s body:", action))
 
@@ -95,22 +94,19 @@ func (f *Filter) printHeaderReplaceInLog(action string) {
 
 	if len(head) > 0 {
 		f.log.Info(fmt.Sprintf("And set/replace in %s Header:", action))
+
 		for _, h := range head {
 			var m = fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
 			if h.Force {
-				m = m + " (force = true -> in all the cases)"
-				
+				m += " (force = true -> in all the cases)"
 			} else {
-				m = m + " (force = false -> only if value is empty or header undefined)"
+				m += " (force = false -> only if value is empty or header undefined)"
 			}
+
 			f.log.Info(m)
 		}
 	}
-
-	
-
 }
-
 
 //Serve starts a filtering http proxy.
 func (f *Filter) Serve() {
