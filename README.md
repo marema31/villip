@@ -46,7 +46,7 @@ dump:
   urls:
     - /books/
     - /movies/
-replace:    #if no response block by default response config part
+replace:    #if no response block by default response config part,check the second yaml file below.
   - from: "book"
     to: "smartphone"
     urls:
@@ -92,8 +92,8 @@ response:         #the http response config part
   header:
     - name: "X-Toto"
       value: "tata"
-      force: false
-request:
+      force: false  #if force = false the header value is set or replaced only if the header does not exist or if value is empty
+request:        #the http request config part
   replace:
     - from: "book"
       to: "smartphone"
@@ -107,7 +107,7 @@ request:
   header:
     - name: "X-Toto"
       value: "tata"
-      force: false
+      force: false  
 restricted: 
   - "192.168.1.0/24"
   - "192.168.8.0/24"
