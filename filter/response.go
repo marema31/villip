@@ -65,6 +65,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
 		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
+
 	s = f.do(requestURL, s)
 
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
@@ -90,9 +91,11 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		r.Body = ioutil.NopCloser(buf)
 		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 	}
+
 	if len(f.response.Header) > 0 {
 		r.Header = f.headerReplace(requestLog, r.Header, "response")
 	}
+
 	return nil
 }
 
@@ -100,14 +103,17 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 func (f *Filter) UpdateRequest(r *http.Request) {
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.URL.String(), "action": "request", "source": r.RemoteAddr})
 	requestLog.Debug("Request")
+
 	u, _ := url.Parse(f.url)
 	r.URL.Host = u.Host
 	r.Host = u.Host
 	r.URL.Scheme = "http"
 	data, err := httputil.DumpRequest(r, false)
+
 	if err != nil {
 		f.log.Error(fmt.Printf("Error"))
 	}
+
 	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
 
 	if r.Body != nil {
@@ -115,6 +121,7 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 		if err != nil {
 			f.log.Fatal(err)
 		}
+
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
 			w, _ := f.compress(s)
@@ -128,13 +135,15 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 			r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 		}
 	}
+
 	if len(f.request.Header) > 0 {
 		r.Header = f.headerReplace(requestLog, r.Header, "request")
 	}
 }
 
-func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http.Header) {
+func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) http.Header {
 	log.Debug("Checking if need to replace header")
+
 	var header []header
 
 	if a == "request" {
@@ -149,6 +158,7 @@ func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http
 			log.Debug(fmt.Sprintf("set header %s with value :  %s", head.Name, head.Value))
 		}
 	}
+
 	return h
 }
 
