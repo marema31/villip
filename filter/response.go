@@ -91,7 +91,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 	}
 	if len(f.response.Header) > 0 {
-		r.Header, err = f.headerReplace(requestLog, r.Header, "response")
+		r.Header = f.headerReplace(requestLog, r.Header, "response")
 	}
 	return nil
 }
@@ -129,11 +129,11 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 		}
 	}
 	if len(f.request.Header) > 0 {
-		r.Header, err = f.headerReplace(requestLog, r.Header, "request")
+		r.Header = f.headerReplace(requestLog, r.Header, "request")
 	}
 }
 
-func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http.Header, error) {
+func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http.Header) {
 	log.Debug("Checking if need to replace header")
 	var header []header
 
@@ -149,7 +149,7 @@ func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http
 			log.Debug(fmt.Sprintf("set header %s with value :  %s", head.Name, head.Value))
 		}
 	}
-	return h, nil
+	return h
 }
 
 //nolint: nestif
@@ -209,10 +209,10 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 	return true
 }
 
-func (f *Filter) readBody(bod io.ReadCloser, head http.Header) (string, error) {
+func (f *Filter) readBody(bod io.ReadCloser, h http.Header) (string, error) {
 	var body io.ReadCloser
 
-	switch head.Get("Content-Encoding") {
+	switch h.Get("Content-Encoding") {
 	case "gzip":
 		body, _ = gzip.NewReader(bod)
 		//		defer body.Close()
