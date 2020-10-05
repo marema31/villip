@@ -62,8 +62,8 @@ response:         #the http response config part
     - from: "meeting"
       to: "texting"
   header:
-    - name: "X-Toto"
-      value: "tata"
+    - name: "X-community"
+      value: "In real life"
       force: false  #if force = false the header value is set or replaced only if the header does not exist or if value is empty
 request:        #the http request config part
   replace:
