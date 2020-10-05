@@ -113,8 +113,12 @@ func (f *Filter) Serve() {
 	u, _ := url.Parse(f.url)
 
 	proxy := httputil.NewSingleHostReverseProxy(u)
-	proxy.ModifyResponse = f.UpdateResponse
-	proxy.Director = f.UpdateRequest
+	if len(f.response.Replace) > 0 ||  len(f.response.Header) > 0 {
+		proxy.ModifyResponse = f.UpdateResponse
+	}
+	if len(f.request.Replace) > 0 || len(f.request.Header) > 0  {
+		proxy.Director = f.UpdateRequest
+	}
 
 	mx := http.NewServeMux()
 	mx.Handle("/", proxy)
