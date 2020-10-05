@@ -25,14 +25,14 @@ type dump struct {
 }
 
 type header struct {
-	Name  string  `yaml:"name" json:"name"`
-	Value string  `yaml:"value" json:"value"`
-	Force bool	  `yaml:"force" json:"force"`
+	Name  string `yaml:"name" json:"name"`
+	Value string `yaml:"value" json:"value"`
+	Force bool   `yaml:"force" json:"force"`
 }
 
 type action struct {
-	Replace  []replacement `yaml:"replace" json:"replace"`
-	Header	 []header	   `yaml:"header" json:"header"`
+	Replace []replacement `yaml:"replace" json:"replace"`
+	Header  []header      `yaml:"header" json:"header"`
 }
 
 type config struct {
@@ -41,13 +41,11 @@ type config struct {
 	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
-	Request	     action	   	    `yaml:"request" json:"request"`
-	Response	 action   	   `yaml:"response" json:"response"`
+	Request      action        `yaml:"request" json:"request"`
+	Response     action        `yaml:"response" json:"response"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
 	URL          string        `yaml:"url" json:"url"`
 }
-
-
 
 //NewFromYAML instantiate a Filter object from the configuration file.
 func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
@@ -163,7 +161,7 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	if len(c.Request.Replace) > 0 {
 		f.request.Replace = replaceToReplacement(f.log, c.Request.Replace)
 	}
-	
+
 	f.restricted = []*net.IPNet{}
 
 	for _, ip := range c.Restricted {
