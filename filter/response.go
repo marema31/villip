@@ -90,7 +90,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		r.Body = ioutil.NopCloser(buf)
 		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 	}
-	if len(f.response.Header) != 0 {
+	if len(f.response.Header) > 0 {
 		r.Header, err = f.headerReplace(requestLog, r.Header, "response")
 	}
 	return nil
@@ -128,7 +128,7 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 			r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
 		}
 	}
-	if len(f.request.Header) != 0 {
+	if len(f.request.Header) > 0 {
 		r.Header, err = f.headerReplace(requestLog, r.Header, "request")
 	}
 }
