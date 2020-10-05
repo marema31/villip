@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -112,10 +113,11 @@ func (f *Filter) Serve() {
 	u, _ := url.Parse(f.url)
 
 	proxy := httputil.NewSingleHostReverseProxy(u)
-	if len(f.response.Replace) > 0 ||  len(f.response.Header) > 0 {
+	if len(f.response.Replace) > 0 || len(f.response.Header) > 0 {
 		proxy.ModifyResponse = f.UpdateResponse
 	}
-	if len(f.request.Replace) > 0 || len(f.request.Header) > 0  {
+
+	if len(f.request.Replace) > 0 || len(f.request.Header) > 0 {
 		proxy.Director = f.UpdateRequest
 	}
 

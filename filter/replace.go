@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
 	"github.com/sirupsen/logrus"
 )
 
 func do(url string, s string, rep *[]replaceParameters) string {
-	for _, r := range (*rep) {
+	for _, r := range *rep {
 		if len(r.urls) != 0 {
 			found := false
 

@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
-)
 
+	"github.com/sirupsen/logrus"
+)
 
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {

@@ -3,13 +3,14 @@ package filter
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"regexp"
+
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type replacement struct {
@@ -105,6 +106,7 @@ func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameter
 	return result
 }
 
+//nolint: golangci-lint
 func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f := Filter{}
 
