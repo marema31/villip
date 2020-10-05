@@ -84,7 +84,7 @@ func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
 	return newFromConfig(upLog, c)
 }
 
-func replaceToReplacement(log *logrus.Entry, rep []replacement) []replaceParameters {
+func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameters {
 	var result = []replaceParameters{}
 
 	for _, r := range rep {
@@ -161,11 +161,11 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	}
 
 	if len(responseReplace) > 0 {
-		f.response.Replace = replaceToReplacement(f.log, responseReplace)
+		f.response.Replace = parseReplaceConfig(f.log, responseReplace)
 	}
 
 	if len(c.Request.Replace) > 0 {
-		f.request.Replace = replaceToReplacement(f.log, c.Request.Replace)
+		f.request.Replace = parseReplaceConfig(f.log, c.Request.Replace)
 	}
 
 	if len(c.Request.Header) > 0 {
