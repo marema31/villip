@@ -36,41 +36,13 @@ VILLIP_URL        | yes       | Base url of the proxyfied site
 ## YAML/JSON configuration files
 Each YAML/JSON files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
 
+The example below give the overall YAML structure of configuration file when using all attributes.
+
 ```yaml
 ---
 port: 8081
 force: true
 url: "http://localhost:1234/url1"
-dump:
-  folder: /var/log/villip/dump
-  urls:
-    - /books/
-    - /movies/
-replace:    #if no response block by default response config part,check the second yaml file below.
-  - from: "book"
-    to: "smartphone"
-    urls:
-      - /youngster/
-  - from: "dance"
-    to: "chat"
-    urls:
-      - /youngsters/
-      - /geeks/
-  - from: "meeting"
-    to: "texting"
-restricted: 
-  - "192.168.1.0/24"
-  - "192.168.8.0/24"
-content-types:
-  - "text/html"
-  - "application/json"
-```
-
-```yaml
----
-port: 8082
-force: true
-url: "http://localhost:1234/url2"
 dump:
   folder: /var/log/villip/dump
   urls:
@@ -105,8 +77,8 @@ request:        #the http request config part
         - /youngsters/
         - /geeks/
   header:
-    - name: "X-Toto"
-      value: "tata"
+    - name: "X-community"
+      value: "In real life"
       force: false  
 restricted: 
   - "192.168.1.0/24"
