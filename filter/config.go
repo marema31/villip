@@ -159,6 +159,10 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	if len(responseReplace) > 0 {
 		f.response.Replace = replaceToReplacement(f.log, responseReplace)
 	}
+
+	if len(c.Request.Replace) > 0 {
+		f.request.Replace = replaceToReplacement(f.log, c.Request.Replace)
+	}
 	
 	f.restricted = []*net.IPNet{}
 
