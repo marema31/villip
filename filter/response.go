@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"strings"
 	"net/http/httputil"
 	"net/url"
-	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 func (f *Filter) do(url string, s string) string {
@@ -37,7 +37,6 @@ func (f *Filter) do(url string, s string) string {
 	return s
 }
 
-
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
@@ -55,7 +54,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.Debug("filtering")
 
-	s, err := f.readBody(r)
+	s, err := f.readBody(r.Body, r.Header)
 	if err != nil {
 		return err
 	}
@@ -97,8 +96,9 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	return nil
 }
 
+//UpdateRequest will be called back when the request is received by the proxy.
 func (f *Filter) UpdateRequest(r *http.Request) {
-	requestLog := f.log.WithFields(logrus.Fields{"url": r.URL.String(),"action" : "request" ,"source": r.RemoteAddr})
+	requestLog := f.log.WithFields(logrus.Fields{"url": r.URL.String(), "action": "request", "source": r.RemoteAddr})
 	requestLog.Debug("Request")
 	u, _ := url.Parse(f.url)
 	r.URL.Host = u.Host
@@ -109,19 +109,19 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 		f.log.Error(fmt.Printf("Error"))
 	}
 	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
-	
+
 	if r.Body != nil {
-		s, err := f.readBodyBis(r.Body, r.Header)
+		s, err := f.readBody(r.Body, r.Header)
 		if err != nil {
-			f.log.Error(err)
+			f.log.Fatal(err)
 		}
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
 			w, _ := f.compress(s)
-	
+
 			r.Body = ioutil.NopCloser(w)
 			r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
-	
+
 		default:
 			buf := bytes.NewBufferString(s)
 			r.Body = ioutil.NopCloser(buf)
@@ -130,7 +130,7 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 	}
 	if len(f.request.Header) != 0 {
 		r.Header, err = f.headerReplace(requestLog, r.Header, "request")
-	}	
+	}
 }
 
 func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http.Header, error) {
@@ -144,15 +144,14 @@ func (f *Filter) headerReplace(log *logrus.Entry, h http.Header, a string) (http
 	}
 
 	for _, head := range header {
-		if (h[head.Name] == nil || h[head.Name][0] == "" || head.Force) {
+		if h[head.Name] == nil || h[head.Name][0] == "" || head.Force {
 			h.Set(head.Name, head.Value)
-			log.Debug(fmt.Sprintf("set header %s with value :  %s",head.Name , head.Value))
-			}
+			log.Debug(fmt.Sprintf("set header %s with value :  %s", head.Name, head.Value))
+		}
 	}
 	return h, nil
 }
 
-	
 //nolint: nestif
 func (f *Filter) isAuthorized(log *logrus.Entry, r *http.Response) (bool, error) {
 	if len(f.restricted) != 0 {
@@ -210,26 +209,7 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 	return true
 }
 
-func (f *Filter) readBody(r *http.Response) (string, error) {
-	var body io.ReadCloser
-
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		body, _ = gzip.NewReader(r.Body)
-		//		defer body.Close()
-	default:
-		body = r.Body
-	}
-
-	b, err := ioutil.ReadAll(body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), err
-}
-
-func (f *Filter) readBodyBis(bod io.ReadCloser, head http.Header) (string, error) {
+func (f *Filter) readBody(bod io.ReadCloser, head http.Header) (string, error) {
 	var body io.ReadCloser
 
 	switch head.Get("Content-Encoding") {
