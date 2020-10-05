@@ -4,6 +4,7 @@ package filter
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -27,27 +28,33 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 	}
 
 	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
-
-	if r.Body != nil {
+	
+	if r.Body != nil && len(f.request.Replace) > 0 {
 		s, err := f.readBody(r.Body, r.Header)
+		
 		if err != nil {
 			f.log.Fatal(err)
 		}
-
+	
+		f.log.Debug(fmt.Sprintf("Body of the before replacement : %s", s))
+		requestURL := strings.TrimPrefix(r.URL.String(), f.url)
+		s = do(requestURL, s, &f.request.Replace)
+		
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
 			w, _ := f.compress(s)
 
 			r.Body = ioutil.NopCloser(w)
-			r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
+			r.ContentLength = int64(w.Len())
 
 		default:
 			buf := bytes.NewBufferString(s)
 			r.Body = ioutil.NopCloser(buf)
-			r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
+			r.ContentLength = int64(buf.Len())
 		}
+		f.log.Debug(fmt.Sprintf("Body of the request after replacement : %s", s))
 	}
-
+	
 	if len(f.request.Header) > 0 {
 		f.headerReplace(requestLog, &r.Header, "request")
 	}
