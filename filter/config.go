@@ -3,13 +3,13 @@ package filter
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"regexp"
+	"github.com/sirupsen/logrus"
 )
 
 type replacement struct {
