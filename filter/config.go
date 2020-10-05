@@ -3,14 +3,13 @@ package filter
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 )
 
 type replacement struct {
@@ -62,6 +61,7 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
 	if err != nil {
 		log.Fatalf("Cannot decode YAML: %v", err)
 	}
+
 	return newFromConfig(upLog, c)
 }
 
@@ -86,6 +86,7 @@ func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
 
 func replaceToReplacement(log *logrus.Entry, rep []replacement) []replaceParameters {
 	var result = []replaceParameters{}
+
 	for _, r := range rep {
 		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
 
@@ -100,6 +101,7 @@ func replaceToReplacement(log *logrus.Entry, rep []replacement) []replaceParamet
 
 		result = append(result, p)
 	}
+
 	return result
 }
 
@@ -109,6 +111,7 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	if c.URL == "" {
 		log.Fatal("Missing url variable")
 	}
+
 	f.url = c.URL
 
 	if c.Port == 0 {
@@ -147,19 +150,30 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f.force = c.Force
 
 	var responseReplace = []replacement{}
-	if len(c.Response.Replace) > 0 && len(c.Replace) > 0 {
+
+	switch {
+	case len(c.Response.Replace) > 0 && len(c.Replace) > 0:
 		f.log.Fatalf("Please check your config file you cannot set a response and a replace at the same time")
-	} else if (len(c.Replace)) > 0 {
+	case len(c.Replace) > 0:
 		responseReplace = c.Replace
-	} else if (len(c.Response.Replace)) > 0 {
+	case len(c.Response.Replace) > 0:
 		responseReplace = c.Response.Replace
 	}
+
 	if len(responseReplace) > 0 {
 		f.response.Replace = replaceToReplacement(f.log, responseReplace)
 	}
 
 	if len(c.Request.Replace) > 0 {
 		f.request.Replace = replaceToReplacement(f.log, c.Request.Replace)
+	}
+
+	if len(c.Request.Header) > 0 {
+		f.request.Header = c.Request.Header
+	}
+
+	if len(c.Response.Header) > 0 {
+		f.response.Header = c.Response.Header
 	}
 
 	f.restricted = []*net.IPNet{}
