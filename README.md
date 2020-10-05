@@ -1,10 +1,14 @@
 # villip
 
-#### Simple HTTP proxy that can do string replacement on the content of proxyfied responses.
+#### Simple HTTP proxy that can do : 
+####  - string replacement on the content of proxyfied requests/responses
+####  - header set/replacement of proxyfied requests/responses
 
 Villip can be used for containerization of legacy web application that provide absolute path in the page by replacing all the absolute link to the correct one without modifying the application.
 
 The replacement will be also done in Location header if the proxyfied site returns an HTTP 301 or 302 code. 
+
+Villip can also be used to replace or set a Header value in the HTTP request/reponse
 
 # Usage
 Configuration of Villip is done via environments variables or a folder containing YAML files. More than one filter can be described (one by environment variable and the others by configuration files). Each filter must be listening to a different TCP port. 
@@ -42,7 +46,7 @@ dump:
   urls:
     - /books/
     - /movies/
-replace:
+replace:    #if no response block by default response config part
   - from: "book"
     to: "smartphone"
     urls:
@@ -54,6 +58,56 @@ replace:
       - /geeks/
   - from: "meeting"
     to: "texting"
+restricted: 
+  - "192.168.1.0/24"
+  - "192.168.8.0/24"
+content-types:
+  - "text/html"
+  - "application/json"
+```
+
+```yaml
+---
+port: 8082
+force: true
+url: "http://localhost:1234/url2"
+dump:
+  folder: /var/log/villip/dump
+  urls:
+    - /books/
+    - /movies/
+response:         #the http response config part
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+    - from: "meeting"
+      to: "texting"
+  header:
+    - name: "X-Toto"
+      value: "tata"
+      force: false
+request:
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+  header:
+    - name: "X-Toto"
+      value: "tata"
+      force: false
 restricted: 
   - "192.168.1.0/24"
   - "192.168.8.0/24"
