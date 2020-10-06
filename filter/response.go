@@ -58,7 +58,6 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
-	
 
 	if len(f.response.Header) > 0 {
 		f.headerReplace(requestLog, r.Header, f.response.Header)

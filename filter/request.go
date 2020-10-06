@@ -51,5 +51,4 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 	if len(f.request.Header) > 0 {
 		f.headerReplace(requestLog, r.Header, f.request.Header)
 	}
-
 }
