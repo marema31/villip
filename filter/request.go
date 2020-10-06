@@ -43,7 +43,6 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 			f.log.Fatal(err)
 		}
 
-		f.log.Info(contentLength)
 		r.ContentLength = int64(contentLength)
 	}
 
