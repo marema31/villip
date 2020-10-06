@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -30,19 +29,14 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.Debug("filtering")
 
-	s, err := f.readBody(r.Body, r.Header)
-	if err != nil {
-		return err
-	}
-
 	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
+
+	s, err := f.readBody(r.Body, r.Header)
 
 	requestID := ""
 	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
 		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
-
-	s = do(requestURL, s, &f.response.Replace)
 
 	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
 
@@ -52,24 +46,21 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		f.dumpResponse(requestID, requestURL, r.Header, s)
 	}
 
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		w, err := f.compress(s)
+	var contentLength int
+
+	if len(f.response.Replace) > 0 {
+		contentLength, r.Body, err = f.replaceBody(requestURL, f.response.Replace, r.Body, s, r.Header)
+		
 		if err != nil {
 			return err
 		}
 
-		r.Body = ioutil.NopCloser(w)
-		r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
-
-	default:
-		buf := bytes.NewBufferString(s)
-		r.Body = ioutil.NopCloser(buf)
-		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
+		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
 	}
 
+
 	if len(f.response.Header) > 0 {
-		f.headerReplace(requestLog, &r.Header, "response")
+		f.headerReplace(requestLog, r.Header, f.response.Header)
 	}
 
 	return nil
@@ -132,24 +123,7 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 	return true
 }
 
-func (f *Filter) readBody(bod io.ReadCloser, h http.Header) (string, error) {
-	var body io.ReadCloser
 
-	switch h.Get("Content-Encoding") {
-	case "gzip":
-		body, _ = gzip.NewReader(bod)
-		//		defer body.Close()
-	default:
-		body = bod
-	}
-
-	b, err := ioutil.ReadAll(body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), err
-}
 
 func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 	var w bytes.Buffer
@@ -178,7 +152,7 @@ func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL
 	location := r.Header.Get("Location")
 	if location != "" {
 		origLocation := location
-		location = do(requestURL, location, &f.response.Replace)
+		location = do(requestURL, location, f.response.Replace)
 
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)

@@ -2,14 +2,18 @@ package filter
 
 import (
 	"fmt"
+	"bytes"
 	"net/http"
 	"strings"
+	"io"
+	"io/ioutil"
+	"compress/gzip"
 
 	"github.com/sirupsen/logrus"
 )
 
-func do(url string, s string, rep *[]replaceParameters) string {
-	for _, r := range *rep {
+func do(url string, s string, rep []replaceParameters) string {
+	for _, r := range rep {
 		if len(r.urls) != 0 {
 			found := false
 
@@ -31,21 +35,62 @@ func do(url string, s string, rep *[]replaceParameters) string {
 	return s
 }
 
-func (f *Filter) headerReplace(log *logrus.Entry, h *http.Header, a string) {
+func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, headerConfig []header ) {
 	log.Debug("Checking if need to replace header")
 
-	var header []header
-
-	if a == "request" {
-		header = f.request.Header
-	} else if a == "response" {
-		header = f.response.Header
-	}
-
-	for _, head := range header {
-		if (*h)[head.Name] == nil || (*h)[head.Name][0] == "" || head.Force {
-			h.Set(head.Name, head.Value)
-			log.Debug(fmt.Sprintf("Set header %s with value :  %s", head.Name, head.Value))
+	for _, h := range headerConfig {
+		if parsedHeader[h.Name] == nil || parsedHeader.Get(h.Name) == "" || h.Force {
+			parsedHeader.Set(h.Name, h.Value)
+			log.Debug(fmt.Sprintf("Set header %s with value :  %s", h.Name, h.Value))
 		}
 	}
+}
+
+func (f *Filter) replaceBody(requestURL string, rep []replaceParameters, body io.ReadCloser, bodyString string, parsedHeader http.Header) (int, io.ReadCloser, error) {
+	var contentLength int
+
+	
+	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", bodyString))
+
+	bodyString = do(requestURL, bodyString, f.response.Replace)
+
+	f.log.Debug(fmt.Sprintf("Body after the replacement : %s", bodyString))
+
+	switch parsedHeader.Get("Content-Encoding") {
+	case "gzip":
+		w, err := f.compress(bodyString)
+		if err != nil {
+			return contentLength, body ,err
+		}
+
+		body = ioutil.NopCloser(w)
+		contentLength = w.Len()
+
+	default:
+		buf := bytes.NewBufferString(bodyString)
+		body = ioutil.NopCloser(buf)
+		contentLength = buf.Len()
+	}
+
+	return contentLength, body, nil 
+}
+
+
+func (f *Filter) readBody(bod io.ReadCloser, h http.Header) (string, error) {
+	var body io.ReadCloser
+
+	switch h.Get("Content-Encoding") {
+	case "gzip":
+		body, _ = gzip.NewReader(bod)
+		//		defer body.Close()
+	default:
+		body = bod
+	}
+
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), err
 }
