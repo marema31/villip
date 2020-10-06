@@ -1,13 +1,13 @@
 package filter
 
 import (
-	"fmt"
 	"bytes"
-	"net/http"
-	"strings"
+	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"compress/gzip"
+	"net/http"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -35,7 +35,7 @@ func do(url string, s string, rep []replaceParameters) string {
 	return s
 }
 
-func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, headerConfig []header ) {
+func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, headerConfig []header) {
 	log.Debug("Checking if need to replace header")
 
 	for _, h := range headerConfig {
@@ -49,10 +49,9 @@ func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, head
 func (f *Filter) replaceBody(requestURL string, rep []replaceParameters, body io.ReadCloser, bodyString string, parsedHeader http.Header) (int, io.ReadCloser, error) {
 	var contentLength int
 
-	
 	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", bodyString))
 
-	bodyString = do(requestURL, bodyString, f.response.Replace)
+	bodyString = do(requestURL, bodyString, rep)
 
 	f.log.Debug(fmt.Sprintf("Body after the replacement : %s", bodyString))
 
@@ -60,7 +59,7 @@ func (f *Filter) replaceBody(requestURL string, rep []replaceParameters, body io
 	case "gzip":
 		w, err := f.compress(bodyString)
 		if err != nil {
-			return contentLength, body ,err
+			return contentLength, body, err
 		}
 
 		body = ioutil.NopCloser(w)
@@ -72,9 +71,8 @@ func (f *Filter) replaceBody(requestURL string, rep []replaceParameters, body io
 		contentLength = buf.Len()
 	}
 
-	return contentLength, body, nil 
+	return contentLength, body, nil
 }
-
 
 func (f *Filter) readBody(bod io.ReadCloser, h http.Header) (string, error) {
 	var body io.ReadCloser

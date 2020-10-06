@@ -32,6 +32,9 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
 
 	s, err := f.readBody(r.Body, r.Header)
+	if err != nil {
+		return err
+	}
 
 	requestID := ""
 	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
@@ -50,14 +53,13 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	if len(f.response.Replace) > 0 {
 		contentLength, r.Body, err = f.replaceBody(requestURL, f.response.Replace, r.Body, s, r.Header)
-		
+
 		if err != nil {
 			return err
 		}
 
 		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
 	}
-
 
 	if len(f.response.Header) > 0 {
 		f.headerReplace(requestLog, r.Header, f.response.Header)
@@ -122,8 +124,6 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 
 	return true
 }
-
-
 
 func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 	var w bytes.Buffer

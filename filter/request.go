@@ -32,9 +32,13 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 
 	s, err := f.readBody(r.Body, r.Header)
 
+	if err != nil {
+		f.log.Fatal(err)
+	}
+
 	if r.Body != nil && len(f.request.Replace) > 0 {
 		contentLength, r.Body, err = f.replaceBody(requestURL, f.request.Replace, r.Body, s, r.Header)
-		
+
 		if err != nil {
 			f.log.Fatal(err)
 		}
