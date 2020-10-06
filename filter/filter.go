@@ -58,7 +58,7 @@ func (f *Filter) startLog() {
 }
 
 func (f *Filter) printBodyReplaceInLog(action string) {
-	f.log.Info(fmt.Sprintf("And replace in %s body:", action))
+	
 
 	var rep = []replaceParameters{}
 
@@ -68,19 +68,23 @@ func (f *Filter) printBodyReplaceInLog(action string) {
 		rep = f.response.Replace
 	}
 
-	for _, r := range rep {
-		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
-
-		if len(r.urls) != 0 {
-			var us []string
-
-			for _, u := range r.urls {
-				us = append(us, u.String())
+	if len(rep) > 0 {
+		f.log.Info(fmt.Sprintf("And replace in %s body:", action))
+		for _, r := range rep {
+			f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
+	
+			if len(r.urls) != 0 {
+				var us []string
+	
+				for _, u := range r.urls {
+					us = append(us, u.String())
+				}
+	
+				f.log.Info(fmt.Sprintf("    for %v", us))
 			}
-
-			f.log.Info(fmt.Sprintf("    for %v", us))
 		}
 	}
+
 }
 
 func (f *Filter) printHeaderReplaceInLog(action string) {
