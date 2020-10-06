@@ -51,15 +51,14 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	var contentLength int
 
-	if len(f.response.Replace) > 0 {
-		contentLength, r.Body, err = f.replaceBody(requestURL, f.response.Replace, r.Body, s, r.Header)
+	contentLength, r.Body, err = f.replaceBody(requestURL, f.response.Replace, r.Body, s, r.Header)
 
-		if err != nil {
-			return err
-		}
-
-		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
+	if err != nil {
+		return err
 	}
+
+	r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
+	
 
 	if len(f.response.Header) > 0 {
 		f.headerReplace(requestLog, r.Header, f.response.Header)
