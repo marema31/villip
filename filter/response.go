@@ -14,9 +14,17 @@ import (
 
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
+	var contentLength int
+
+	var originalBody string
+
+	var modifiedBody string
+
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
 	requestLog.Debug("Response")
+
+	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
 
 	authorized, err := f.isAuthorized(requestLog, r)
 	if err != nil || !authorized {
@@ -29,35 +37,27 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.Debug("filtering")
 
-	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
+	if r.Body != nil {
+		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
 
-	s, err := f.readBody(r.Body, r.Header)
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		f.log.Info(r.Request.Header.Get("Request-ID"))
+		requestID := ""
+		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
+			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("Request-ID"), requestURL, r.Header, originalBody)
+		}
+
+		requestLog.WithFields(logrus.Fields{"requestID": requestID})
+		f.location(requestLog, r, requestURL)
+		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
+
+		if requestID != "" {
+			f.dumpHTTPMessage(requestID, "",requestURL, r.Header, modifiedBody)
+		}
 	}
-
-	requestID := ""
-	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
-		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
-	}
-
-	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
-
-	f.location(requestLog, r, requestURL)
-
-	if requestID != "" {
-		f.dumpResponse(requestID, requestURL, r.Header, s)
-	}
-
-	var contentLength int
-
-	contentLength, r.Body, err = f.replaceBody(requestURL, f.response.Replace, r.Body, s, r.Header)
-
-	if err != nil {
-		return err
-	}
-
-	r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
 
 	if len(f.response.Header) > 0 {
 		f.headerReplace(requestLog, r.Header, f.response.Header)
@@ -148,6 +148,7 @@ func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 
 func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL string) {
 	location := r.Header.Get("Location")
+
 	if location != "" {
 		origLocation := location
 		location = do(requestURL, location, f.response.Replace)
