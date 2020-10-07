@@ -45,7 +45,9 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		}
 
 		f.log.Info(r.Request.Header.Get("Request-ID"))
+
 		requestID := ""
+
 		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
 			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("Request-ID"), requestURL, r.Header, originalBody)
 		}
@@ -55,7 +57,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
 
 		if requestID != "" {
-			f.dumpHTTPMessage(requestID, "",requestURL, r.Header, modifiedBody)
+			f.dumpHTTPMessage(requestID, "", requestURL, r.Header, modifiedBody)
 		}
 	}
 

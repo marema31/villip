@@ -46,53 +46,6 @@ func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, head
 	}
 }
 
-func (f *Filter) replaceBody(requestURL string, rep []replaceParameters, body io.ReadCloser, bodyString string, parsedHeader http.Header) (int, io.ReadCloser, error) {
-	var contentLength int
-
-	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", bodyString))
-
-	bodyString = do(requestURL, bodyString, rep)
-
-	f.log.Debug(fmt.Sprintf("Body after the replacement : %s", bodyString))
-
-	switch parsedHeader.Get("Content-Encoding") {
-	case "gzip":
-		w, err := f.compress(bodyString)
-		if err != nil {
-			return contentLength, body, err
-		}
-
-		body = ioutil.NopCloser(w)
-		contentLength = w.Len()
-
-	default:
-		buf := bytes.NewBufferString(bodyString)
-		body = ioutil.NopCloser(buf)
-		contentLength = buf.Len()
-	}
-
-	return contentLength, body, nil
-}
-
-func (f *Filter) readBody(bod io.ReadCloser, h http.Header) (string, error) {
-	var body io.ReadCloser
-
-	switch h.Get("Content-Encoding") {
-	case "gzip":
-		body, _ = gzip.NewReader(bod)
-		//		defer body.Close()
-	default:
-		body = bod
-	}
-
-	b, err := ioutil.ReadAll(body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), err
-}
-
 func (f *Filter) readAndReplaceBody(requestURL string, rep []replaceParameters, bod io.ReadCloser, parsedHeader http.Header) (int, io.ReadCloser, string, string, error) {
 	var originalBody string
 

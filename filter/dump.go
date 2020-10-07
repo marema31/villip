@@ -68,7 +68,7 @@ func (f *Filter) dumpToLog(fileType string, requestID string, url string, header
 	return requestID
 }
 
-func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string ,url string, header http.Header, body string) string {
+func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, url string, header http.Header, body string) string {
 	var httpMessageType string
 
 	if header.Get("Server") != "" {
@@ -84,12 +84,14 @@ func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string ,
 		if err != nil {
 			f.log.Fatalf("Failed to generate requestId: %v", err)
 		}
+
 		if requestIDFromRequest == "" {
 			requestID = rID
 		} else {
 			requestID = requestIDFromRequest
 		}
-		fileType = "original" +httpMessageType
+
+		fileType = "original" + httpMessageType
 	}
 
 	if len(f.dumpURLs) != 0 {
