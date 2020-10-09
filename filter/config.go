@@ -23,12 +23,26 @@ type dump struct {
 	Folder string   `yaml:"folder" json:"folder"`
 	URLs   []string `yaml:"urls" json:"urls"`
 }
+
+type header struct {
+	Name  string `yaml:"name" json:"name"`
+	Value string `yaml:"value" json:"value"`
+	Force bool   `yaml:"force" json:"force"`
+}
+
+type action struct {
+	Replace []replacement `yaml:"replace" json:"replace"`
+	Header  []header      `yaml:"header" json:"header"`
+}
+
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
 	Dump         dump          `yaml:"dump" json:"dump"`
 	Force        bool          `yaml:"force" json:"force"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
+	Request      action        `yaml:"request" json:"request"`
+	Response     action        `yaml:"response" json:"response"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
 	URL          string        `yaml:"url" json:"url"`
 }
@@ -71,8 +85,36 @@ func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
 	return newFromConfig(upLog, c)
 }
 
+func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameters {
+	var result = []replaceParameters{}
+
+	for _, r := range rep {
+		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
+
+		for _, reg := range r.Urls {
+			r, err := regexp.Compile(reg)
+			if err != nil {
+				log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
+			}
+
+			p.urls = append(p.urls, r)
+		}
+
+		result = append(result, p)
+	}
+
+	return result
+}
+
+//nolint: golangci-lint
 func newFromConfig(log *logrus.Entry, c config) *Filter {
 	f := Filter{}
+
+	if c.URL == "" {
+		log.Fatal("Missing url variable")
+	}
+
+	f.url = c.URL
 
 	if c.Port == 0 {
 		c.Port = 8080
@@ -109,28 +151,32 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.force = c.Force
 
-	f.replace = []replaceParameters{}
+	var responseReplace = []replacement{}
 
-	for _, r := range c.Replace {
-		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
-
-		for _, reg := range r.Urls {
-			r, err := regexp.Compile(reg)
-			if err != nil {
-				f.log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
-			}
-
-			p.urls = append(p.urls, r)
-		}
-
-		f.replace = append(f.replace, p)
+	switch {
+	case len(c.Response.Replace) > 0 && len(c.Replace) > 0:
+		f.log.Fatalf("Please check your config file you cannot set a response and a replace at the same time")
+	case len(c.Replace) > 0:
+		responseReplace = c.Replace
+	case len(c.Response.Replace) > 0:
+		responseReplace = c.Response.Replace
 	}
 
-	if c.URL == "" {
-		log.Fatal("Missing url variable")
+	if len(responseReplace) > 0 {
+		f.response.Replace = parseReplaceConfig(f.log, responseReplace)
 	}
 
-	f.url = c.URL
+	if len(c.Request.Replace) > 0 {
+		f.request.Replace = parseReplaceConfig(f.log, c.Request.Replace)
+	}
+
+	if len(c.Request.Header) > 0 {
+		f.request.Header = c.Request.Header
+	}
+
+	if len(c.Response.Header) > 0 {
+		f.response.Header = c.Response.Header
+	}
 
 	f.restricted = []*net.IPNet{}
 

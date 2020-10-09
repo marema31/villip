@@ -17,10 +17,21 @@ type replaceParameters struct {
 	urls []*regexp.Regexp
 }
 
+type response struct {
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
+}
+
+type request struct {
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
+}
+
 //Filter proxifies an URL and filter the response.
 type Filter struct {
 	force        bool
-	replace      []replaceParameters
+	response     response
+	request      request
 	contentTypes []string
 	restricted   []*net.IPNet
 	url          string
@@ -39,19 +50,62 @@ func (f *Filter) startLog() {
 	}
 
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
-	f.log.Info("And replace:")
 
-	for _, r := range f.replace {
-		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
+	f.printBodyReplaceInLog("request")
+	f.printHeaderReplaceInLog("request")
+	f.printBodyReplaceInLog("response")
+	f.printHeaderReplaceInLog("response")
+}
 
-		if len(r.urls) != 0 {
-			var us []string
+func (f *Filter) printBodyReplaceInLog(action string) {
+	var rep = []replaceParameters{}
 
-			for _, u := range r.urls {
-				us = append(us, u.String())
+	if action == "request" {
+		rep = f.request.Replace
+	} else if action == "response" {
+		rep = f.response.Replace
+	}
+
+	if len(rep) > 0 {
+		f.log.Info(fmt.Sprintf("And replace in %s body:", action))
+
+		for _, r := range rep {
+			f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
+
+			if len(r.urls) != 0 {
+				var us []string
+
+				for _, u := range r.urls {
+					us = append(us, u.String())
+				}
+
+				f.log.Info(fmt.Sprintf("    for %v", us))
+			}
+		}
+	}
+}
+
+func (f *Filter) printHeaderReplaceInLog(action string) {
+	var head = []header{}
+
+	if action == "request" {
+		head = f.request.Header
+	} else if action == "response" {
+		head = f.response.Header
+	}
+
+	if len(head) > 0 {
+		f.log.Info(fmt.Sprintf("And set/replace in %s Header:", action))
+
+		for _, h := range head {
+			var m = fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
+			if h.Force {
+				m += " (force = true -> in all the cases)"
+			} else {
+				m += " (force = false -> only if value is empty or header undefined)"
 			}
 
-			f.log.Info(fmt.Sprintf("    for %v", us))
+			f.log.Info(m)
 		}
 	}
 }
@@ -59,8 +113,15 @@ func (f *Filter) startLog() {
 //Serve starts a filtering http proxy.
 func (f *Filter) Serve() {
 	u, _ := url.Parse(f.url)
+
 	proxy := httputil.NewSingleHostReverseProxy(u)
-	proxy.ModifyResponse = f.UpdateResponse
+	if len(f.response.Replace) > 0 || len(f.response.Header) > 0 {
+		proxy.ModifyResponse = f.UpdateResponse
+	}
+
+	if len(f.request.Replace) > 0 || len(f.request.Header) > 0 {
+		proxy.Director = f.UpdateRequest
+	}
 
 	mx := http.NewServeMux()
 	mx.Handle("/", proxy)

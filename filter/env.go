@@ -37,7 +37,7 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 		c.Dump.Folder = dumpFolder
 	}
 
-	c.Replace = []replacement{}
+	c.Response.Replace = []replacement{}
 
 	if from, ok = os.LookupEnv("VILLIP_FROM"); ok {
 		if to, ok = os.LookupEnv("VILLIP_TO"); !ok {
@@ -48,7 +48,7 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
 		}
 
-		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
+		c.Response.Replace = append(c.Response.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
 	if restricteds, ok = os.LookupEnv("VILLIP_RESTRICTED"); ok {
@@ -73,7 +73,7 @@ func NewFromEnv(upLog *logrus.Entry) *Filter {
 			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
 		}
 
-		c.Replace = append(c.Replace, replacement{From: from, To: to, Urls: urls})
+		c.Response.Replace = append(c.Response.Replace, replacement{From: from, To: to, Urls: urls})
 	}
 
 	url, ok := os.LookupEnv("VILLIP_URL")

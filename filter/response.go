@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -13,34 +12,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f *Filter) do(url string, s string) string {
-	for _, r := range f.replace {
-		if len(r.urls) != 0 {
-			found := false
-
-			for _, reg := range r.urls {
-				if reg.MatchString(url) {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				continue
-			}
-		}
-
-		s = strings.Replace(s, r.from, r.to, -1)
-	}
-
-	return s
-}
-
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
-	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "status": r.StatusCode, "source": r.Request.RemoteAddr})
+	var contentLength int
+
+	var originalBody string
+
+	var modifiedBody string
+
+	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
-	requestLog.Debug("Request")
+	requestLog.Debug("Response")
+
+	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
 
 	authorized, err := f.isAuthorized(requestLog, r)
 	if err != nil || !authorized {
@@ -53,42 +37,32 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 
 	requestLog.Debug("filtering")
 
-	s, err := f.readBody(r)
-	if err != nil {
-		return err
-	}
+	if r.Body != nil {
+		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
 
-	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
-
-	requestID := ""
-	if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
-		requestID = f.dumpResponse(requestID, requestURL, r.Header, s)
-	}
-
-	s = f.do(requestURL, s)
-
-	requestLog.WithFields(logrus.Fields{"requestID": requestID}).Debug("will rewrite content")
-
-	f.location(requestLog, r, requestURL)
-
-	if requestID != "" {
-		f.dumpResponse(requestID, requestURL, r.Header, s)
-	}
-
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		w, err := f.compress(s)
 		if err != nil {
 			return err
 		}
 
-		r.Body = ioutil.NopCloser(w)
-		r.Header["Content-Length"] = []string{fmt.Sprint(w.Len())}
+		f.log.Info(r.Request.Header.Get("X-VILLIP-Request-ID"))
 
-	default:
-		buf := bytes.NewBufferString(s)
-		r.Body = ioutil.NopCloser(buf)
-		r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
+		requestID := ""
+
+		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
+			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("X-VILLIP-Request-ID"), requestURL, r.Header, originalBody)
+		}
+
+		requestLog.WithFields(logrus.Fields{"requestID": requestID})
+		f.location(requestLog, r, requestURL)
+		r.Header["Content-Length"] = []string{fmt.Sprint(contentLength)}
+
+		if requestID != "" {
+			f.dumpHTTPMessage(requestID, "", requestURL, r.Header, modifiedBody)
+		}
+	}
+
+	if len(f.response.Header) > 0 {
+		f.headerReplace(requestLog, r.Header, f.response.Header)
 	}
 
 	return nil
@@ -151,25 +125,6 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 	return true
 }
 
-func (f *Filter) readBody(r *http.Response) (string, error) {
-	var body io.ReadCloser
-
-	switch r.Header.Get("Content-Encoding") {
-	case "gzip":
-		body, _ = gzip.NewReader(r.Body)
-		//		defer body.Close()
-	default:
-		body = r.Body
-	}
-
-	b, err := ioutil.ReadAll(body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), err
-}
-
 func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 	var w bytes.Buffer
 
@@ -195,9 +150,10 @@ func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 
 func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL string) {
 	location := r.Header.Get("Location")
+
 	if location != "" {
 		origLocation := location
-		location = f.do(requestURL, location)
+		location = do(requestURL, location, f.response.Replace)
 
 		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
 		r.Header.Set("Location", location)
