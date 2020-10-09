@@ -44,12 +44,12 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 			return err
 		}
 
-		f.log.Info(r.Request.Header.Get("Request-ID"))
+		f.log.Info(r.Request.Header.Get("X-VILLIP-Request-ID"))
 
 		requestID := ""
 
 		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
-			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("Request-ID"), requestURL, r.Header, originalBody)
+			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("X-VILLIP-Request-ID"), requestURL, r.Header, originalBody)
 		}
 
 		requestLog.WithFields(logrus.Fields{"requestID": requestID})
