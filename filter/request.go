@@ -46,7 +46,7 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 		requestID := ""
 		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
 			requestID = f.dumpHTTPMessage(requestID, "", requestURL, r.Header, originalBody)
-			r.Header.Set("Request-ID", requestID)
+			r.Header.Set("X-VILLIP-Request-ID", requestID)
 		}
 
 		requestLog.WithFields(logrus.Fields{"requestID": requestID})
