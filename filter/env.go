@@ -11,7 +11,7 @@ import (
 )
 
 //NewFromEnv instantiate a Filter object from the environment variable configuration.
-func NewFromEnv(upLog *logrus.Entry) *Filter {
+func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 	var ok bool
 
 	var c config

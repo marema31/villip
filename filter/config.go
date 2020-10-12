@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -35,6 +36,12 @@ type action struct {
 	Header  []header      `yaml:"header" json:"header"`
 }
 
+type tokenAction struct {
+	Header string `yaml:"header" json:"header"`
+	Value  string `yaml:"value" json:"value"`
+	Action string `yaml:"action" json:"action"`
+}
+
 type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
 	Dump         dump          `yaml:"dump" json:"dump"`
@@ -44,11 +51,12 @@ type config struct {
 	Request      action        `yaml:"request" json:"request"`
 	Response     action        `yaml:"response" json:"response"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
+	Token        []tokenAction `yaml:"token" json:"token"`
 	URL          string        `yaml:"url" json:"url"`
 }
 
 //NewFromYAML instantiate a Filter object from the configuration file.
-func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
+func NewFromYAML(upLog *logrus.Entry, filePath string) (string, *Filter) {
 	log := upLog.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
@@ -67,7 +75,7 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) *Filter {
 }
 
 //NewFromJSON instantiate a Filter object from the configuration file.
-func NewFromJSON(upLog *logrus.Entry, filePath string) *Filter {
+func NewFromJSON(upLog *logrus.Entry, filePath string) (string, *Filter) {
 	log := upLog.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
@@ -106,8 +114,33 @@ func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameter
 	return result
 }
 
-//nolint: golangci-lint
-func newFromConfig(log *logrus.Entry, c config) *Filter {
+func parseTokenConfig(log *logrus.Entry, tokenConfig tokenAction) (string, headerConditions) {
+	var hc headerConditions
+
+	if len(tokenConfig.Header) == 0 {
+		log.Fatal("token header parameter cannot be empty")
+	}
+
+	hc.value = tokenConfig.Value
+	hc.action = accept
+
+	action := strings.ToLower(tokenConfig.Action)
+	switch action {
+	case "accept":
+		hc.action = accept
+	case "reject":
+		hc.action = reject
+	case "notempty":
+		hc.action = notEmpty
+	default:
+		log.Fatalf("'%s' is not a valid action for token condition", action)
+	}
+
+	return tokenConfig.Header, hc
+}
+
+//nolint: funlen
+func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 	f := Filter{}
 
 	if c.URL == "" {
@@ -180,6 +213,17 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.restricted = []*net.IPNet{}
 
+	f.token = make(map[string][]headerConditions)
+
+	for _, tokenConfig := range c.Token {
+		header, token := parseTokenConfig(f.log, tokenConfig)
+		if _, ok := f.token[header]; !ok {
+			f.token[header] = make([]headerConditions, 0)
+		}
+
+		f.token[header] = append(f.token[header], token)
+	}
+
 	for _, ip := range c.Restricted {
 		_, ipnet, err := net.ParseCIDR(ip)
 		if err != nil {
@@ -197,5 +241,5 @@ func newFromConfig(log *logrus.Entry, c config) *Filter {
 
 	f.startLog()
 
-	return &f
+	return f.port, &f
 }
