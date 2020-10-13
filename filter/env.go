@@ -11,6 +11,7 @@ import (
 )
 
 //NewFromEnv instantiate a Filter object from the environment variable configuration.
+//nolint: funlen
 func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 	var ok bool
 
@@ -20,6 +21,10 @@ func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 
 	urls := []string{}
 	villipPort, _ := os.LookupEnv("VILLIP_PORT")
+
+	if villipPort == "" {
+		villipPort = "8080"
+	}
 
 	port, err := strconv.Atoi(villipPort)
 	if err != nil {
