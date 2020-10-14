@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
 
@@ -14,22 +12,18 @@ import (
 
 //UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
-	var contentLength int
-
-	var originalBody string
-
-	var modifiedBody string
+	var (
+		contentLength int
+		originalBody  string
+		modifiedBody  string
+		err           error
+	)
 
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
 	// The Request in the Response is the last URL the client tried to access.
 	requestLog.Debug("Response")
 
 	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
-
-	authorized, err := f.isAuthorized(requestLog, r)
-	if err != nil || !authorized {
-		return err
-	}
 
 	if !f.force && !f.toFilter(requestLog, r) {
 		return nil
@@ -66,42 +60,6 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	}
 
 	return nil
-}
-
-//nolint: nestif
-func (f *Filter) isAuthorized(log *logrus.Entry, r *http.Response) (bool, error) {
-	if len(f.restricted) != 0 {
-		sip, _, err := net.SplitHostPort(r.Request.RemoteAddr)
-		if err != nil {
-			log.WithFields(logrus.Fields{"userip": r.Request.RemoteAddr}).Error("userip is not IP:port")
-			return true, err
-		}
-
-		ip := net.ParseIP(sip)
-		if !ip.IsLoopback() {
-			seen := false
-
-			for _, ipnet := range f.restricted {
-				if ipnet.Contains(ip) {
-					seen = true
-					break
-				}
-			}
-
-			if !seen {
-				log.WithFields(logrus.Fields{"source": ip}).Debug("forbidden from this IP")
-
-				buf := bytes.NewBufferString("Access forbidden from this IP")
-				r.Body = ioutil.NopCloser(buf)
-				r.Header["Content-Length"] = []string{fmt.Sprint(buf.Len())}
-				r.StatusCode = http.StatusForbidden
-
-				return false, nil
-			}
-		}
-	}
-
-	return true, nil
 }
 
 func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {

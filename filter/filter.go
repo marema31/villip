@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +14,19 @@ type replaceParameters struct {
 	from string
 	to   string
 	urls []*regexp.Regexp
+}
+
+type headerAction int
+
+const (
+	accept   headerAction = iota
+	reject   headerAction = iota
+	notEmpty headerAction = iota
+)
+
+type headerConditions struct {
+	value  string
+	action headerAction
 }
 
 type response struct {
@@ -34,6 +46,7 @@ type Filter struct {
 	request      request
 	contentTypes []string
 	restricted   []*net.IPNet
+	token        map[string][]headerConditions
 	url          string
 	port         string
 	log          *logrus.Entry
@@ -41,77 +54,8 @@ type Filter struct {
 	dumpURLs     []*regexp.Regexp
 }
 
-func (f *Filter) startLog() {
-	f.log.Info(fmt.Sprintf("Listen on port %s", f.port))
-	f.log.Info(fmt.Sprintf("Will filter responses from %s", f.url))
-
-	if len(f.restricted) != 0 {
-		f.log.Info(fmt.Sprintf("Only for request from: %s ", f.restricted))
-	}
-
-	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
-
-	f.printBodyReplaceInLog("request")
-	f.printHeaderReplaceInLog("request")
-	f.printBodyReplaceInLog("response")
-	f.printHeaderReplaceInLog("response")
-}
-
-func (f *Filter) printBodyReplaceInLog(action string) {
-	var rep = []replaceParameters{}
-
-	if action == "request" {
-		rep = f.request.Replace
-	} else if action == "response" {
-		rep = f.response.Replace
-	}
-
-	if len(rep) > 0 {
-		f.log.Info(fmt.Sprintf("And replace in %s body:", action))
-
-		for _, r := range rep {
-			f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
-
-			if len(r.urls) != 0 {
-				var us []string
-
-				for _, u := range r.urls {
-					us = append(us, u.String())
-				}
-
-				f.log.Info(fmt.Sprintf("    for %v", us))
-			}
-		}
-	}
-}
-
-func (f *Filter) printHeaderReplaceInLog(action string) {
-	var head = []header{}
-
-	if action == "request" {
-		head = f.request.Header
-	} else if action == "response" {
-		head = f.response.Header
-	}
-
-	if len(head) > 0 {
-		f.log.Info(fmt.Sprintf("And set/replace in %s Header:", action))
-
-		for _, h := range head {
-			var m = fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
-			if h.Force {
-				m += " (force = true -> in all the cases)"
-			} else {
-				m += " (force = false -> only if value is empty or header undefined)"
-			}
-
-			f.log.Info(m)
-		}
-	}
-}
-
 //Serve starts a filtering http proxy.
-func (f *Filter) Serve() {
+func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 	u, _ := url.Parse(f.url)
 
 	proxy := httputil.NewSingleHostReverseProxy(u)
@@ -123,11 +67,12 @@ func (f *Filter) Serve() {
 		proxy.Director = f.UpdateRequest
 	}
 
-	mx := http.NewServeMux()
-	mx.Handle("/", proxy)
+	// Update the headers to allow for SSL redirection
+	req.URL.Host = u.Host
+	req.URL.Scheme = u.Scheme
+	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+	req.Host = u.Host
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", f.port), mx)
-	if err != nil {
-		f.log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
-	}
+	f.log.WithField("url", f.url).Debug("Will serve")
+	proxy.ServeHTTP(res, req)
 }
