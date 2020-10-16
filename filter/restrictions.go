@@ -69,12 +69,12 @@ func (f *Filter) isAccepted(parsedHeader http.Header) bool {
 		}
 
 		if rejected || !accepted {
-			f.log.WithFields(logrus.Fields{"header": key}).Debug("Refused")
+			f.log.WithField("header", key).Debug("Refused")
 			return false
 		}
 	}
 
-	f.log.WithFields(logrus.Fields{"header": key}).Debug("Accepted")
+	f.log.Debug("Accepted")
 
 	return true
 }

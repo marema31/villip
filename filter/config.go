@@ -159,7 +159,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 
 	f.port = fmt.Sprintf("%d", c.Port)
 
-	f.log = log.WithFields({"port", f.port,"url",f.url})
+	f.log = log.WithFields(logrus.Fields{"port": f.port, "url": f.url})
 
 	if c.Dump.Folder != "" {
 		f.dumpFolder = c.Dump.Folder
