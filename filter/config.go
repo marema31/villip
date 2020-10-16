@@ -159,7 +159,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 
 	f.port = fmt.Sprintf("%d", c.Port)
 
-	f.log = log.WithField("port", f.port)
+	f.log = log.WithFields({"port", f.port,"url",f.url})
 
 	if c.Dump.Folder != "" {
 		f.dumpFolder = c.Dump.Folder
@@ -227,7 +227,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 	for _, ip := range c.Restricted {
 		_, ipnet, err := net.ParseCIDR(ip)
 		if err != nil {
-			log.Fatal(fmt.Sprintf("\"%s\" in restricted parameter is not a valid CIDR", ip))
+			f.log.Fatal(fmt.Sprintf("\"%s\" in restricted parameter is not a valid CIDR", ip))
 		}
 
 		f.restricted = append(f.restricted, ipnet)

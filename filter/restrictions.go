@@ -74,7 +74,7 @@ func (f *Filter) isAccepted(parsedHeader http.Header) bool {
 		}
 	}
 
-	f.log.Debug("Accepted")
+	f.log.WithFields(logrus.Fields{"header": key}).Debug("Accepted")
 
 	return true
 }
