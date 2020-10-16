@@ -73,6 +73,6 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
 	req.Host = u.Host
 
-	f.log.WithField("url", f.url).Debug("Will serve")
+	f.log.Debug("proxying")
 	proxy.ServeHTTP(res, req)
 }
