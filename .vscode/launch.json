@@ -1,0 +1,40 @@
+{
+  // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+  // Pointez pour afficher la description des attributs existants.
+  // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/main.go",
+      "env": {
+        "VILLIP_DEBUG": 1,
+        "VILLIP_FOLDER": "${workspaceFolder}/testdata"
+      },
+      "args": []
+    },
+    {
+      "name": "Launch env",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/main.go",
+      "env": {
+        "VILLIP_PORT": 8080,
+        "VILLIP_DEBUG": 1,
+        "VILLIP_URL": "http://localhost:8081/",
+        "VILLIP_TYPES": "text/html,text/css,application/javascript,application/xml,application/xslt+xml,application/json",
+        "VILLIP_FROM": "/from/",
+        "VILLIP_TO": "/to/",
+        "VILLIP_FROM_1": "/from/",
+        "VILLIP_TO_1": "/to1/",
+        "VILLIP_FROM_2": "from2",
+        "VILLIP_TO_2": "to3"
+      },
+      "args": []
+    }
+  ]
+}

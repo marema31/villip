@@ -8,7 +8,7 @@ import (
 )
 
 //IsConcerned determine if the request fulfil the filter condition.
-func (f *Filter) IsConcerned(ip net.IP, parsedHeader http.Header) bool { //TODO: Add header parsing
+func (f *Filter) IsConcerned(ip net.IP, parsedHeader http.Header) bool {
 	return f.isAuthorized(ip) && f.isAccepted(parsedHeader)
 }
 
