@@ -79,6 +79,7 @@ func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 		}
 
 		c.Response.Replace = append(c.Response.Replace, replacement{From: from, To: to, Urls: urls})
+		i++
 	}
 
 	url, ok := os.LookupEnv("VILLIP_URL")
