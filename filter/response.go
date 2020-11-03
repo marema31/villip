@@ -32,7 +32,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	requestLog.Debug("filtering")
 
 	if r.Body != nil {
-		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
+		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.response.Replace, r.Body, r.Header)
 
 		if err != nil {
 			return err
