@@ -1,10 +1,14 @@
 # villip
 
-#### Simple HTTP proxy that can do string replacement on the content of proxyfied responses.
+#### Simple HTTP proxy that can do : 
+####  - string replacement on the content of proxyfied requests/responses
+####  - header set/replacement of proxyfied requests/responses
 
 Villip can be used for containerization of legacy web application that provide absolute path in the page by replacing all the absolute link to the correct one without modifying the application.
 
 The replacement will be also done in Location header if the proxyfied site returns an HTTP 301 or 302 code. 
+
+Villip can also be used to replace or set a Header value in the HTTP request/reponse
 
 # Usage
 Configuration of Villip is done via environments variables or a folder containing YAML files. More than one filter can be described (one by environment variable and the others by configuration files). Each filter must be listening to a different TCP port. 
@@ -32,6 +36,8 @@ VILLIP_URL        | yes       | Base url of the proxyfied site
 ## YAML/JSON configuration files
 Each YAML/JSON files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
 
+The example below give the overall YAML structure of configuration file when using all attributes.
+
 ```yaml
 ---
 port: 8081
@@ -42,25 +48,63 @@ dump:
   urls:
     - /books/
     - /movies/
-replace:
-  - from: "book"
-    to: "smartphone"
-    urls:
-      - /youngster/
-  - from: "dance"
-    to: "chat"
-    urls:
-      - /youngsters/
-      - /geeks/
-  - from: "meeting"
-    to: "texting"
+response:         #the http response config part
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+    - from: "meeting"
+      to: "texting"
+  header:
+    - name: "X-community"
+      value: "In real life"
+      force: false  #if force = false the header value is set or replaced only if the header does not exist or if value is empty
+request:        #the http request config part
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+  header:
+    - name: "X-community"
+      value: "In real life"
+      force: false  
 restricted: 
   - "192.168.1.0/24"
   - "192.168.8.0/24"
+token:
+  - header: X-MY-TOKEN
+    value: "123"
+    action: "accept"
+  - header: X-MY-TOKEN
+    value: "456"
+    action: "accept"
+  - header: X-MY-TOKEN
+    value: "789"
+    action: "reject"
+  - header: X-MY-SECONDTOKEN
+    value: "ABC"
+    action: "accept"
+  - header: X-MY-THIRDTOKEN
+    action: "notempty"
 content-types:
   - "text/html"
   - "application/json"
 ```
+## Conditionnal proxy
+More than one file can refer to the same port, in this case all execpt on must have at a `token` or `restricted` attribute.
+Villip will proxifies the request to one of the definition that will be fulfilled by the request condition (on header and/or source IP).
 
 # Disclaimer
 I use this application for development environment, security was not a concern for this tool. Do not use it for production environment without being sure of what you do

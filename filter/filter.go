@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -17,12 +16,37 @@ type replaceParameters struct {
 	urls []*regexp.Regexp
 }
 
+type headerAction int
+
+const (
+	accept   headerAction = iota
+	reject   headerAction = iota
+	notEmpty headerAction = iota
+)
+
+type headerConditions struct {
+	value  string
+	action headerAction
+}
+
+type response struct {
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
+}
+
+type request struct {
+	Replace []replaceParameters `yaml:"replace" json:"replace"`
+	Header  []header            `yaml:"header" json:"header"`
+}
+
 //Filter proxifies an URL and filter the response.
 type Filter struct {
 	force        bool
-	replace      []replaceParameters
+	response     response
+	request      request
 	contentTypes []string
 	restricted   []*net.IPNet
+	token        map[string][]headerConditions
 	url          string
 	port         string
 	log          *logrus.Entry
@@ -30,43 +54,25 @@ type Filter struct {
 	dumpURLs     []*regexp.Regexp
 }
 
-func (f *Filter) startLog() {
-	f.log.Info(fmt.Sprintf("Listen on port %s", f.port))
-	f.log.Info(fmt.Sprintf("Will filter responses from %s", f.url))
-
-	if len(f.restricted) != 0 {
-		f.log.Info(fmt.Sprintf("Only for request from: %s ", f.restricted))
-	}
-
-	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
-	f.log.Info("And replace:")
-
-	for _, r := range f.replace {
-		f.log.Info(fmt.Sprintf("   %s  by  %s", r.from, r.to))
-
-		if len(r.urls) != 0 {
-			var us []string
-
-			for _, u := range r.urls {
-				us = append(us, u.String())
-			}
-
-			f.log.Info(fmt.Sprintf("    for %v", us))
-		}
-	}
-}
-
 //Serve starts a filtering http proxy.
-func (f *Filter) Serve() {
+func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 	u, _ := url.Parse(f.url)
+
 	proxy := httputil.NewSingleHostReverseProxy(u)
-	proxy.ModifyResponse = f.UpdateResponse
-
-	mx := http.NewServeMux()
-	mx.Handle("/", proxy)
-
-	err := http.ListenAndServe(fmt.Sprintf(":%s", f.port), mx)
-	if err != nil {
-		f.log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
+	if len(f.response.Replace) > 0 || len(f.response.Header) > 0 {
+		proxy.ModifyResponse = f.UpdateResponse
 	}
+
+	if len(f.request.Replace) > 0 || len(f.request.Header) > 0 {
+		proxy.Director = f.UpdateRequest
+	}
+
+	// Update the headers to allow for SSL redirection
+	req.URL.Host = u.Host
+	req.URL.Scheme = u.Scheme
+	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+	req.Host = u.Host
+
+	f.log.Debug("proxying")
+	proxy.ServeHTTP(res, req)
 }
