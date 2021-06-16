@@ -103,11 +103,11 @@ content-types:
   - "application/json"
 ```
 ## Conditionnal proxy
-More than one file can refer to the same port, in this case all execpt on must have at a `token` or `restricted` attribute.
+More than one file can refer to the same port, in this case all except one must have at a `token` or `restricted` attribute.
 Villip will proxifies the request to one of the definition that will be fulfilled by the request condition (on header and/or source IP).
 
 # Disclaimer
-I use this application for development environment, security was not a concern for this tool. Do not use it for production environment without being sure of what you do
+I use this application for development environment, security was not a concern for this tool. Do not use it for production environment without being sure of what you are doing
 
 
 ## Contribution
