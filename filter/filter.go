@@ -78,12 +78,15 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 
 	transport := http.Transport{
 		Proxy:               http.ProxyFromEnvironment,
-		TLSHandshakeTimeout: 10 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second, //nolint: gomnd
 	}
 
 	if f.insecure {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint: gosec
+
+		f.log.Debug("Not checking SSL certificates")
 	}
+
 	proxy.Transport = &transport
 
 	f.log.Debug("proxying")
