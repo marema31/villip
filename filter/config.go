@@ -46,6 +46,7 @@ type config struct {
 	ContentTypes []string      `yaml:"content-types" json:"content-types"`
 	Dump         dump          `yaml:"dump" json:"dump"`
 	Force        bool          `yaml:"force" json:"force"`
+	Insecure     bool          `yaml:"insecure" json:"insecure"`
 	Port         int           `yaml:"port" json:"port"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
 	Request      action        `yaml:"request" json:"request"`
@@ -183,6 +184,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 	}
 
 	f.force = c.Force
+	f.insecure = c.Insecure
 
 	var responseReplace = []replacement{}
 

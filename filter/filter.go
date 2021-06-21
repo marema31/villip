@@ -1,11 +1,13 @@
 package filter
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -41,6 +43,7 @@ type request struct {
 
 //Filter proxifies an URL and filter the response.
 type Filter struct {
+	insecure     bool
 	force        bool
 	response     response
 	request      request
@@ -72,6 +75,16 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 	req.URL.Scheme = u.Scheme
 	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
 	req.Host = u.Host
+
+	transport := http.Transport{
+		Proxy:               http.ProxyFromEnvironment,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	if f.insecure {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	proxy.Transport = &transport
 
 	f.log.Debug("proxying")
 	proxy.ServeHTTP(res, req)
