@@ -52,9 +52,8 @@ func NewFromEnv(upLog *logrus.Entry) (string, uint8, *Filter) {
 	}
 
 	if _, ok := os.LookupEnv("VILLIP_INSECURE"); ok {
-		c.insecure = true
+		c.Insecure = true
 	}
-
 
 	if dumpFolder, ok := os.LookupEnv("VILLIP_DUMPFOLDER"); ok {
 		c.Dump.Folder = dumpFolder
