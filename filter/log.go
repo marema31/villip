@@ -5,11 +5,10 @@ import (
 )
 
 func (f *Filter) startLog() {
-	f.log.Info(fmt.Sprintf("Listen on port %s", f.port))
-	f.log.Info(fmt.Sprintf("Will filter responses from %s", f.url))
-
 	if len(f.restricted) != 0 {
 		f.log.Info(fmt.Sprintf("Only for request from: %s ", f.restricted))
+	} else {
+		f.log.Info("All requests")
 	}
 
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))

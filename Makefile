@@ -11,8 +11,8 @@ BIN      = $(CURDIR)/bin
 GO_FILES = $(shell find $(CURDIR) -iname '*.go' -type f | grep -v /vendor/)
 BINNAME  = $(shell basename $(MODULE))
 
-GO      = go 
-GOFMT      = gofmt 
+GO      = go
+GOFMT      = gofmt
 TIMEOUT = 15
 V = 0
 Q = $(if $(filter 1,$V),,@)
@@ -25,7 +25,7 @@ all: fmt lint vet golangci-lint | $(BIN) ; $(info $(M) building executable…) @
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.version=$(VERSION) -X $(MODULE)/cmd.date=$(DATE) -X $(MODULE)/cmd.commit=$(COMMIT)' \
-		-o $(BIN)/$(BINNAME) main.go
+		-o $(BIN)/$(BINNAME) .
 
 # Tools
 
@@ -33,8 +33,8 @@ $(BIN):
 	@mkdir -p $@
 
 GOLANGCI = $(BIN)/golangci-lint
-$(BIN)/golangci-lint: 
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) v1.26.0
+$(BIN)/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) v1.27.0
 
 $(BIN)/%: | $(BIN) ; $(info $(M) building $(PACKAGE)…)
 	$Q tmp=$$(mktemp -d); \

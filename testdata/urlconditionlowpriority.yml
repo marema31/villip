@@ -1,0 +1,22 @@
+port: 8082
+force: true
+priority: 5
+url: "http://localhost:1234/url1"
+dump:
+  folder: /var/log/villip/dump
+  urls:
+    - /books/
+    - /movies/
+response:         #the http response config part
+  replace:
+    - from: "book"
+      to: "papyrus"
+      urls:
+        - /youngster/
+token:
+  - header: X-MY-TOKEN
+    value: "123"
+    action: "accept"
+content-types:
+  - "text/html"
+  - "application/json"

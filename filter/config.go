@@ -48,16 +48,18 @@ type config struct {
 	Force        bool          `yaml:"force" json:"force"`
 	Insecure     bool          `yaml:"insecure" json:"insecure"`
 	Port         int           `yaml:"port" json:"port"`
+	Priority     uint8         `yaml:"priority" json:"priority"`
 	Replace      []replacement `yaml:"replace" json:"replace"`
 	Request      action        `yaml:"request" json:"request"`
 	Response     action        `yaml:"response" json:"response"`
 	Restricted   []string      `yaml:"restricted" json:"restricted"`
 	Token        []tokenAction `yaml:"token" json:"token"`
+	Type         string        `yaml:"type" json:"type"`
 	URL          string        `yaml:"url" json:"url"`
 }
 
 //NewFromYAML instantiate a Filter object from the configuration file.
-func NewFromYAML(upLog *logrus.Entry, filePath string) (string, *Filter) {
+func NewFromYAML(upLog *logrus.Entry, filePath string) (string, uint8, *Filter) {
 	log := upLog.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
@@ -76,7 +78,7 @@ func NewFromYAML(upLog *logrus.Entry, filePath string) (string, *Filter) {
 }
 
 //NewFromJSON instantiate a Filter object from the configuration file.
-func NewFromJSON(upLog *logrus.Entry, filePath string) (string, *Filter) {
+func NewFromJSON(upLog *logrus.Entry, filePath string) (string, uint8, *Filter) {
 	log := upLog.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
@@ -141,7 +143,7 @@ func parseTokenConfig(log *logrus.Entry, tokenConfig tokenAction) (string, heade
 }
 
 //nolint: funlen
-func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
+func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 	f := Filter{}
 
 	if c.URL == "" {
@@ -149,9 +151,14 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 	}
 
 	f.url = c.URL
+	f.priority = fmt.Sprintf("%d", c.Priority)
 
 	if c.Port == 0 {
 		c.Port = 8080
+	}
+
+	if c.Type == "" {
+		c.Type = "http"
 	}
 
 	if c.Port > 65535 || 0 > c.Port {
@@ -160,7 +167,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 
 	f.port = fmt.Sprintf("%d", c.Port)
 
-	f.log = log.WithFields(logrus.Fields{"port": f.port, "url": f.url})
+	f.log = log.WithFields(logrus.Fields{"port": f.port, "url": f.url, "priority": f.priority})
 
 	if c.Dump.Folder != "" {
 		f.dumpFolder = c.Dump.Folder
@@ -243,5 +250,5 @@ func newFromConfig(log *logrus.Entry, c config) (string, *Filter) {
 
 	f.startLog()
 
-	return f.port, &f
+	return f.port, c.Priority, &f
 }

@@ -12,7 +12,7 @@ import (
 
 //NewFromEnv instantiate a Filter object from the environment variable configuration.
 //nolint: funlen
-func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
+func NewFromEnv(upLog *logrus.Entry) (string, uint8, *Filter) {
 	var ok bool
 
 	var c config
@@ -20,6 +20,19 @@ func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 	var from, to, restricteds string
 
 	urls := []string{}
+	villipPriority, _ := os.LookupEnv("VILLIP_PRIORITY")
+
+	priority, err := strconv.Atoi(villipPriority)
+	if err != nil {
+		log.Fatalf("%s is not a valid priority", villipPriority)
+	}
+
+	if priority < 0 || priority > 255 {
+		log.Fatalf("%s is not a valid priority", villipPriority)
+	}
+
+	c.Priority = uint8(priority)
+
 	villipPort, _ := os.LookupEnv("VILLIP_PORT")
 
 	if villipPort == "" {
@@ -37,6 +50,11 @@ func NewFromEnv(upLog *logrus.Entry) (string, *Filter) {
 	if _, ok := os.LookupEnv("VILLIP_FORCE"); ok {
 		c.Force = true
 	}
+
+	if _, ok := os.LookupEnv("VILLIP_INSECURE"); ok {
+		c.insecure = true
+	}
+
 
 	if dumpFolder, ok := os.LookupEnv("VILLIP_DUMPFOLDER"); ok {
 		c.Dump.Folder = dumpFolder

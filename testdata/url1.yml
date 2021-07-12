@@ -1,5 +1,5 @@
 ---
-port: 8081
+port: 8083
 url: "http://localhost:1234/url1"
 replace:
   - from: "book"
@@ -8,7 +8,7 @@ replace:
     to: "chat"
   - from: "meeting"
     to: "texting"
-restricted: 
+restricted:
   - "192.168.1.0/24"
   - "192.168.8.0/24"
 content-types:
