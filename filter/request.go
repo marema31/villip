@@ -30,14 +30,15 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 
 	data, err := httputil.DumpRequest(r, false)
 	if err != nil {
-		f.log.Error(fmt.Printf("Error"))
+		f.log.Error("Error")
 	}
 
 	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
 
 	//in request sometimes there is no body
 	if r.Body != nil {
-		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
+		contentLength, r.Body, originalBody, modifiedBody, err =
+			f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
 
 		if err != nil {
 			f.log.Fatal(err)

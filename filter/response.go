@@ -19,7 +19,13 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		err           error
 	)
 
-	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
+	requestLog := f.log.WithFields(
+		logrus.Fields{
+			"url":    r.Request.URL.String(),
+			"action": "response",
+			"status": r.StatusCode,
+			"source": r.Request.RemoteAddr,
+		})
 	// The Request in the Response is the last URL the client tried to access.
 	requestLog.Debug("Response")
 
@@ -32,7 +38,8 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	requestLog.Debug("filtering")
 
 	if r.Body != nil {
-		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.response.Replace, r.Body, r.Header)
+		contentLength, r.Body, originalBody, modifiedBody, err =
+			f.readAndReplaceBody(requestURL, f.response.Replace, r.Body, r.Header)
 
 		if err != nil {
 			return err
@@ -43,7 +50,13 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		requestID := ""
 
 		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
-			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("X-VILLIP-Request-ID"), requestURL, r.Header, originalBody)
+			requestID = f.dumpHTTPMessage(
+				requestID,
+				r.Request.Header.Get("X-VILLIP-Request-ID"),
+				requestURL,
+				r.Header,
+				originalBody,
+			)
 		}
 
 		requestLog.WithFields(logrus.Fields{"requestID": requestID})
@@ -77,6 +90,7 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 		return false
 	} else if r.StatusCode != http.StatusFound && r.StatusCode != http.StatusMovedPermanently {
 		log.Debug("... skipping status")
+
 		return false
 	}
 
@@ -113,7 +127,9 @@ func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL
 		origLocation := location
 		location = do(requestURL, location, f.response.Replace)
 
-		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
+		requestLog.
+			WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).
+			Debug("will rewrite location header")
 		r.Header.Set("Location", location)
 	}
 }

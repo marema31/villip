@@ -23,12 +23,14 @@ func (f *Filter) isAuthorized(ip net.IP) bool {
 		for _, ipnet := range f.restricted {
 			if ipnet.Contains(ip) {
 				seen = true
+
 				break
 			}
 		}
 
 		if !seen {
 			f.log.WithFields(logrus.Fields{"source": ip}).Debug("filter forbidden for this IP")
+
 			return false
 		}
 	}
@@ -41,6 +43,7 @@ func (f *Filter) isAccepted(parsedHeader http.Header) bool {
 		value := parsedHeader.Get(key)
 		if value == "" {
 			f.log.WithFields(logrus.Fields{"header": key}).Debug("missing header for this filter")
+
 			return false
 		}
 
@@ -70,6 +73,7 @@ func (f *Filter) isAccepted(parsedHeader http.Header) bool {
 
 		if rejected || !accepted {
 			f.log.WithField("header", key).Debug("Refused")
+
 			return false
 		}
 	}

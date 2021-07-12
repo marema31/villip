@@ -12,10 +12,9 @@ import (
 )
 
 func generateID() (string, error) {
-	r := make([]byte, 12)
+	r := make([]byte, 12) //nolint: gomnd
 
-	_, err := rand.Read(r)
-	if err != nil {
+	if _, err := rand.Read(r); err != nil {
 		return "", err
 	}
 
@@ -68,7 +67,13 @@ func (f *Filter) dumpToLog(fileType string, requestID string, url string, header
 	return requestID
 }
 
-func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, url string, header http.Header, body string) string {
+func (f *Filter) dumpHTTPMessage(
+	requestID string,
+	requestIDFromRequest string,
+	url string,
+	header http.Header,
+	body string,
+) string {
 	var httpMessageType string
 
 	if header.Get("Server") != "" {
@@ -100,6 +105,7 @@ func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, 
 		for _, reg := range f.dumpURLs {
 			if reg.MatchString(url) {
 				found = true
+
 				break
 			}
 		}

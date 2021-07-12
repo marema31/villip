@@ -20,6 +20,7 @@ func do(url string, s string, rep []replaceParameters) string {
 			for _, reg := range r.urls {
 				if reg.MatchString(url) {
 					found = true
+
 					break
 				}
 			}
@@ -46,7 +47,12 @@ func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, head
 	}
 }
 
-func (f *Filter) readAndReplaceBody(requestURL string, rep []replaceParameters, bod io.ReadCloser, parsedHeader http.Header) (int, io.ReadCloser, string, string, error) {
+func (f *Filter) readAndReplaceBody(
+	requestURL string,
+	rep []replaceParameters,
+	bod io.ReadCloser,
+	parsedHeader http.Header,
+) (int, io.ReadCloser, string, string, error) {
 	var originalBody string
 
 	var modifiedBody string

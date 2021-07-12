@@ -43,7 +43,7 @@ type tokenAction struct {
 }
 
 type config struct {
-	ContentTypes []string      `yaml:"content-types" json:"content-types"`
+	ContentTypes []string      `yaml:"content-types" json:"content-types"` //nolint: tagliatelle
 	Dump         dump          `yaml:"dump" json:"dump"`
 	Force        bool          `yaml:"force" json:"force"`
 	Insecure     bool          `yaml:"insecure" json:"insecure"`
@@ -142,7 +142,7 @@ func parseTokenConfig(log *logrus.Entry, tokenConfig tokenAction) (string, heade
 	return tokenConfig.Header, hc
 }
 
-//nolint: funlen
+//nolint: funlen,gocognit
 func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 	f := Filter{}
 
