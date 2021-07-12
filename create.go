@@ -29,7 +29,7 @@ func insertInFilters(filters filtersList, port string, priority uint8, f *filter
 	}
 }
 
-func createServer(filters map[uint8][]*filter.Filter, port string, upLog *logrus.Entry) *server.Server {
+func createServer(filters map[uint8][]*filter.Filter, port string, upLog logrus.FieldLogger) *server.Server {
 	var s *server.Server
 
 	priorities := make([]uint8, 0, 1)
@@ -53,7 +53,7 @@ func createServer(filters map[uint8][]*filter.Filter, port string, upLog *logrus
 	return s
 }
 
-func createServers(filters filtersList, upLog *logrus.Entry) map[string]*server.Server {
+func createServers(filters filtersList, upLog logrus.FieldLogger) map[string]*server.Server {
 	servers := make(map[string]*server.Server)
 	for port := range filters {
 		servers[port] = createServer(filters[port], port, upLog)

@@ -64,9 +64,10 @@ response:         #the http response config part
     - from: "meeting"
       to: "texting"
   header:
-    - name: "X-community"
+    - name: "X-community" # Beware that Vilip will Canonicalize your header name (Mime convention) X-ENV will be converted to X-Env
       value: "In real life"
       force: false  #if force = false the header value is set or replaced only if the header does not exist or if value is empty
+      add: false # if true a new header line is added
 request:        #the http request config part
   replace:
     - from: "book"
@@ -89,16 +90,16 @@ token:
   - header: X-MY-TOKEN
     value: "123"
     action: "accept"
-  - header: X-MY-TOKEN
+  - header: X-MMYTOKEN
     value: "456"
     action: "accept"
-  - header: X-MY-TOKEN
+  - header: X-MMYTOKEN
     value: "789"
     action: "reject"
-  - header: X-MY-SECONDTOKEN
+  - header: X-MMYSECONDTOKEN
     value: "ABC"
     action: "accept"
-  - header: X-MY-THIRDTOKEN
+  - header: X-MMYTHIRDTOKEN
     action: "notempty"
 content-types:
   - "text/html"

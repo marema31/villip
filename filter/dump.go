@@ -7,19 +7,41 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/sirupsen/logrus"
 )
 
-func generateID() (string, error) {
-	r := make([]byte, 12)
+// Mockable generateID for unit test.
+var _generateID = generateID //nolint: gochecknoglobals
 
-	_, err := rand.Read(r)
-	if err != nil {
+func generateID() (string, error) {
+	r := make([]byte, 12) //nolint: gomnd
+
+	if _, err := rand.Read(r); err != nil {
 		return "", err
 	}
 
 	return hex.EncodeToString(r), nil
+}
+
+func sortHeader(header http.Header) []string {
+	sortedKeys := make([]string, 0, len(header))
+	for name := range header {
+		sortedKeys = append(sortedKeys, name)
+	}
+
+	sort.Strings(sortedKeys)
+
+	sortedHeaders := make([]string, 0, len(header))
+
+	for _, name := range sortedKeys {
+		for _, value := range header[name] {
+			sortedHeaders = append(sortedHeaders, fmt.Sprintf("%s: %s\n", name, value))
+		}
+	}
+
+	return sortedHeaders
 }
 
 func (f *Filter) dumpToFile(fileType string, requestID string, url string, header http.Header, body string) string {
@@ -35,11 +57,9 @@ func (f *Filter) dumpToFile(fileType string, requestID string, url string, heade
 		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
 	}
 
-	for name, values := range header {
-		for _, value := range values {
-			if _, err := file.WriteString(fmt.Sprintf("%s: %s\n", name, value)); err != nil {
-				f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
-			}
+	for _, value := range sortHeader(header) {
+		if _, err := file.WriteString(value); err != nil {
+			f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
 		}
 	}
 
@@ -57,10 +77,8 @@ func (f *Filter) dumpToFile(fileType string, requestID string, url string, heade
 func (f *Filter) dumpToLog(fileType string, requestID string, url string, header http.Header, body string) string {
 	log := f.log.WithFields(logrus.Fields{"response-type": fileType, "requestID": requestID, "url": url})
 
-	for name, values := range header {
-		for _, value := range values {
-			log.WithField("part", "header").Debugf("%s: %s\n", name, value)
-		}
+	for _, value := range sortHeader(header) {
+		log.WithField("part", "header").Debug(value)
 	}
 
 	log.WithField("part", "body").Debug(body)
@@ -68,7 +86,13 @@ func (f *Filter) dumpToLog(fileType string, requestID string, url string, header
 	return requestID
 }
 
-func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, url string, header http.Header, body string) string {
+func (f *Filter) dumpHTTPMessage(
+	requestID string,
+	requestIDFromRequest string,
+	url string,
+	header http.Header,
+	body string,
+) string {
 	var httpMessageType string
 
 	if header.Get("Server") != "" {
@@ -80,7 +104,7 @@ func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, 
 	fileType := "filtered" + httpMessageType
 
 	if requestID == "" {
-		rID, err := generateID()
+		rID, err := _generateID()
 		if err != nil {
 			f.log.Fatalf("Failed to generate requestId: %v", err)
 		}
@@ -100,6 +124,7 @@ func (f *Filter) dumpHTTPMessage(requestID string, requestIDFromRequest string, 
 		for _, reg := range f.dumpURLs {
 			if reg.MatchString(url) {
 				found = true
+
 				break
 			}
 		}

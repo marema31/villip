@@ -20,7 +20,7 @@ func (f *Filter) startLog() {
 }
 
 func (f *Filter) printBodyReplaceInLog(action string) {
-	var rep = []replaceParameters{}
+	rep := []replaceParameters{}
 
 	if action == "request" {
 		rep = f.request.Replace
@@ -48,7 +48,7 @@ func (f *Filter) printBodyReplaceInLog(action string) {
 }
 
 func (f *Filter) printHeaderReplaceInLog(action string) {
-	var head = []header{}
+	head := []Cheader{}
 
 	if action == "request" {
 		head = f.request.Header
@@ -60,7 +60,7 @@ func (f *Filter) printHeaderReplaceInLog(action string) {
 		f.log.Info(fmt.Sprintf("And set/replace in %s Header:", action))
 
 		for _, h := range head {
-			var m = fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
+			m := fmt.Sprintf("    for header %s set/replace value by : %s", h.Name, h.Value)
 			if h.Force {
 				m += " (force = true -> in all the cases)"
 			} else {

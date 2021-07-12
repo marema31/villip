@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
+// UpdateResponse will be called back when the proxyfied server respond and filter the response if necessary.
 func (f *Filter) UpdateResponse(r *http.Response) error {
 	var (
 		contentLength int
@@ -19,20 +19,25 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		err           error
 	)
 
-	requestLog := f.log.WithFields(logrus.Fields{"url": r.Request.URL.String(), "action": "response", "status": r.StatusCode, "source": r.Request.RemoteAddr})
+	requestLog := f.log.WithFields(
+		logrus.Fields{
+			"url":    r.Request.URL.String(),
+			"action": "response",
+			"status": r.StatusCode,
+			"source": r.Request.RemoteAddr,
+		})
 	// The Request in the Response is the last URL the client tried to access.
-	requestLog.Debug("Response")
-
 	requestURL := strings.TrimPrefix(r.Request.URL.String(), f.url)
 
 	if !f.force && !f.toFilter(requestLog, r) {
 		return nil
 	}
 
-	requestLog.Debug("filtering")
-
 	if r.Body != nil {
-		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.response.Replace, r.Body, r.Header)
+		requestLog.Debug("filtering")
+
+		contentLength, r.Body, originalBody, modifiedBody, err =
+			f.readAndReplaceBody(requestURL, f.response.Replace, r.Body, r.Header)
 
 		if err != nil {
 			return err
@@ -43,7 +48,13 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 		requestID := ""
 
 		if f.dumpFolder != "" || len(f.dumpURLs) != 0 {
-			requestID = f.dumpHTTPMessage(requestID, r.Request.Header.Get("X-VILLIP-Request-ID"), requestURL, r.Header, originalBody)
+			requestID = f.dumpHTTPMessage(
+				requestID,
+				r.Request.Header.Get("X-VILLIP-Request-ID"),
+				requestURL,
+				r.Header,
+				originalBody,
+			)
 		}
 
 		requestLog.WithFields(logrus.Fields{"requestID": requestID})
@@ -62,7 +73,7 @@ func (f *Filter) UpdateResponse(r *http.Response) error {
 	return nil
 }
 
-func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
+func (f *Filter) toFilter(log logrus.FieldLogger, r *http.Response) bool {
 	if r.StatusCode == http.StatusOK {
 		currentType := r.Header.Get("Content-Type")
 
@@ -76,7 +87,9 @@ func (f *Filter) toFilter(log *logrus.Entry, r *http.Response) bool {
 
 		return false
 	} else if r.StatusCode != http.StatusFound && r.StatusCode != http.StatusMovedPermanently {
+		// TODO: should be configurable
 		log.Debug("... skipping status")
+
 		return false
 	}
 
@@ -106,14 +119,16 @@ func (f *Filter) compress(s string) (*bytes.Buffer, error) {
 	return &w, nil
 }
 
-func (f *Filter) location(requestLog *logrus.Entry, r *http.Response, requestURL string) {
+func (f *Filter) location(requestLog logrus.FieldLogger, r *http.Response, requestURL string) {
 	location := r.Header.Get("Location")
 
 	if location != "" {
 		origLocation := location
 		location = do(requestURL, location, f.response.Replace)
 
-		requestLog.WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).Debug("will rewrite location header")
+		requestLog.
+			WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).
+			Debug("will rewrite location header")
 		r.Header.Set("Location", location)
 	}
 }
