@@ -28,16 +28,9 @@ func New(upLog *logrus.Entry, port string, f *filter.Filter) *Server {
 	}
 }
 
-//Insert a filter in the list, the filter without condition will be the last one.
+//Insert a filter in the list
 func (s *Server) Insert(f *filter.Filter) {
-	if !f.IsConditional() {
-		s.filters = append(s.filters, f)
-	} else {
-		// Prepending filter to the list using golang tricks
-		s.filters = append(s.filters, &filter.Filter{})
-		copy(s.filters[1:], s.filters)
-		s.filters[0] = f
-	}
+	s.filters = append(s.filters, f)
 }
 
 func (s *Server) conditionalProxy(res http.ResponseWriter, req *http.Request) {
@@ -60,11 +53,14 @@ func (s *Server) conditionalProxy(res http.ResponseWriter, req *http.Request) {
 }
 
 //Serve listens to the port and call the correct filter.
-func (s *Server) Serve() {
-	http.HandleFunc("/", s.conditionalProxy)
+func (s *Server) Serve() error {
+	mux := http.NewServeMux()
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", s.port), nil)
+	mux.HandleFunc("/", s.conditionalProxy)
+
+	err := http.ListenAndServe(fmt.Sprintf(":%s", s.port), mux)
 	if err != nil {
 		s.log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
 	}
+	return err
 }

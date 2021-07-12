@@ -1,0 +1,62 @@
+port: 8082
+force: true
+priority: 10
+url: "http://localhost:1234/url1"
+dump:
+  folder: /var/log/villip/dump
+  urls:
+    - /books/
+    - /movies/
+response:         #the http response config part
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+    - from: "meeting"
+      to: "texting"
+  header:
+    - name: "X-community"
+      value: "In real life"
+      force: false  #if force = false the header value is set or replaced only if the header does not exist or if value is empty
+request:        #the http request config part
+  replace:
+    - from: "book"
+      to: "smartphone"
+      urls:
+        - /youngster/
+    - from: "dance"
+      to: "chat"
+      urls:
+        - /youngsters/
+        - /geeks/
+  header:
+    - name: "X-community"
+      value: "In real life"
+      force: false
+restricted:
+  - "192.168.1.0/24"
+  - "192.168.8.0/24"
+token:
+  - header: X-MY-TOKEN
+    value: "123"
+    action: "accept"
+  - header: X-MY-TOKEN
+    value: "456"
+    action: "accept"
+  - header: X-MY-TOKEN
+    value: "789"
+    action: "reject"
+  - header: X-MY-SECONDTOKEN
+    value: "ABC"
+    action: "accept"
+  - header: X-MY-THIRDTOKEN
+    action: "notempty"
+content-types:
+  - "text/html"
+  - "application/json"

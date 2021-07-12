@@ -52,6 +52,7 @@ type Filter struct {
 	token        map[string][]headerConditions
 	url          string
 	port         string
+	priority     string
 	log          *logrus.Entry
 	dumpFolder   string
 	dumpURLs     []*regexp.Regexp

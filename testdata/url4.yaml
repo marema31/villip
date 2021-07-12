@@ -1,6 +1,6 @@
 port: 4444
 force: true
 url: "http://localhost:4443"
-replace: 
+replace:
       - from: '\\\"host\\\":\\\"mysql\\\"'
         to: '"host":"1.1.1.1"'
