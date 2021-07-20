@@ -1,103 +1,20 @@
 package filter
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 )
 
-type replacement struct {
-	From string   `yaml:"from" json:"from"`
-	To   string   `yaml:"to" json:"to"`
-	Urls []string `yaml:"urls" json:"urls"`
-}
+// Make newFromConfig mockable for unit test.
+var _newFromConfig = newFromConfig //nolint: gochecknoglobals
 
-type dump struct {
-	Folder string   `yaml:"folder" json:"folder"`
-	URLs   []string `yaml:"urls" json:"urls"`
-}
-
-type header struct {
-	Name  string `yaml:"name" json:"name"`
-	Value string `yaml:"value" json:"value"`
-	Force bool   `yaml:"force" json:"force"`
-}
-
-type action struct {
-	Replace []replacement `yaml:"replace" json:"replace"`
-	Header  []header      `yaml:"header" json:"header"`
-}
-
-type tokenAction struct {
-	Header string `yaml:"header" json:"header"`
-	Value  string `yaml:"value" json:"value"`
-	Action string `yaml:"action" json:"action"`
-}
-
-type config struct {
-	ContentTypes []string      `yaml:"content-types" json:"content-types"`
-	Dump         dump          `yaml:"dump" json:"dump"`
-	Force        bool          `yaml:"force" json:"force"`
-	Insecure     bool          `yaml:"insecure" json:"insecure"`
-	Port         int           `yaml:"port" json:"port"`
-	Priority     uint8         `yaml:"priority" json:"priority"`
-	Replace      []replacement `yaml:"replace" json:"replace"`
-	Request      action        `yaml:"request" json:"request"`
-	Response     action        `yaml:"response" json:"response"`
-	Restricted   []string      `yaml:"restricted" json:"restricted"`
-	Token        []tokenAction `yaml:"token" json:"token"`
-	Type         string        `yaml:"type" json:"type"`
-	URL          string        `yaml:"url" json:"url"`
-}
-
-//NewFromYAML instantiate a Filter object from the configuration file.
-func NewFromYAML(upLog *logrus.Entry, filePath string) (string, uint8, *Filter) {
-	log := upLog.WithField("file", filepath.Base(filePath))
-
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Fatalf("Cannot read file: %v", err)
-	}
-
-	var c config
-
-	err = yaml.Unmarshal(content, &c)
-	if err != nil {
-		log.Fatalf("Cannot decode YAML: %v", err)
-	}
-
-	return newFromConfig(upLog, c)
-}
-
-//NewFromJSON instantiate a Filter object from the configuration file.
-func NewFromJSON(upLog *logrus.Entry, filePath string) (string, uint8, *Filter) {
-	log := upLog.WithField("file", filepath.Base(filePath))
-
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Fatalf("Cannot read file: %v", err)
-	}
-
-	var c config
-
-	err = json.Unmarshal(content, &c)
-	if err != nil {
-		log.Fatalf("Cannot decode JSON: %v", err)
-	}
-
-	return newFromConfig(upLog, c)
-}
-
-func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameters {
-	var result = []replaceParameters{}
+func parseReplaceConfig(log logrus.FieldLogger, rep []Creplacement) []replaceParameters {
+	result := make([]replaceParameters, 0)
 
 	for _, r := range rep {
 		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
@@ -117,7 +34,7 @@ func parseReplaceConfig(log *logrus.Entry, rep []replacement) []replaceParameter
 	return result
 }
 
-func parseTokenConfig(log *logrus.Entry, tokenConfig tokenAction) (string, headerConditions) {
+func parseTokenConfig(log logrus.FieldLogger, tokenConfig CtokenAction) (string, headerConditions) {
 	var hc headerConditions
 
 	if len(tokenConfig.Header) == 0 {
@@ -142,8 +59,8 @@ func parseTokenConfig(log *logrus.Entry, tokenConfig tokenAction) (string, heade
 	return tokenConfig.Header, hc
 }
 
-//nolint: funlen
-func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
+//nolint: funlen,gocognit
+func newFromConfig(log logrus.FieldLogger, c Config) (string, uint8, *Filter) {
 	f := Filter{}
 
 	if c.URL == "" {
@@ -157,12 +74,19 @@ func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 		c.Port = 8080
 	}
 
-	if c.Type == "" {
-		c.Type = "http"
-	}
-
 	if c.Port > 65535 || 0 > c.Port {
 		log.Fatalf("%d is not a valid TCP port", c.Port)
+	}
+
+	switch strings.ToLower(c.Type) {
+	case "http":
+		f.kind = httpFilter
+	case "tcp":
+		f.kind = httpFilter
+	case "udp":
+		f.kind = httpFilter
+	default:
+		f.kind = httpFilter
 	}
 
 	f.port = fmt.Sprintf("%d", c.Port)
@@ -179,7 +103,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 		}
 	}
 
-	f.dumpURLs = []*regexp.Regexp{}
+	f.dumpURLs = make([]*regexp.Regexp, 0)
 
 	for _, reg := range c.Dump.URLs {
 		r, err := regexp.Compile(reg)
@@ -193,7 +117,7 @@ func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 	f.force = c.Force
 	f.insecure = c.Insecure
 
-	var responseReplace = []replacement{}
+	responseReplace := make([]Creplacement, 0)
 
 	switch {
 	case len(c.Response.Replace) > 0 && len(c.Replace) > 0:
@@ -204,18 +128,22 @@ func newFromConfig(log *logrus.Entry, c config) (string, uint8, *Filter) {
 		responseReplace = c.Response.Replace
 	}
 
+	f.response.Replace = make([]replaceParameters, 0)
 	if len(responseReplace) > 0 {
 		f.response.Replace = parseReplaceConfig(f.log, responseReplace)
 	}
 
+	f.request.Replace = make([]replaceParameters, 0)
 	if len(c.Request.Replace) > 0 {
 		f.request.Replace = parseReplaceConfig(f.log, c.Request.Replace)
 	}
 
+	f.request.Header = make([]Cheader, 0)
 	if len(c.Request.Header) > 0 {
 		f.request.Header = c.Request.Header
 	}
 
+	f.response.Header = make([]Cheader, 0)
 	if len(c.Response.Header) > 0 {
 		f.response.Header = c.Response.Header
 	}

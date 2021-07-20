@@ -15,6 +15,7 @@ import (
 func main() {
 	log := logrus.New()
 	filters := make(filtersList)
+
 	var (
 		f        *filter.Filter
 		port     string
@@ -51,8 +52,8 @@ func main() {
 			default:
 				continue
 			}
-			insertInFilters(filters, port, priority, f)
 
+			insertInFilters(filters, port, priority, f)
 		}
 	}
 

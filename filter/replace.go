@@ -12,6 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Mockable function.
+var _do = do //nolint: gochecknoglobals
+
 func do(url string, s string, rep []replaceParameters) string {
 	for _, r := range rep {
 		if len(r.urls) != 0 {
@@ -20,6 +23,7 @@ func do(url string, s string, rep []replaceParameters) string {
 			for _, reg := range r.urls {
 				if reg.MatchString(url) {
 					found = true
+
 					break
 				}
 			}
@@ -35,29 +39,52 @@ func do(url string, s string, rep []replaceParameters) string {
 	return s
 }
 
-func (f *Filter) headerReplace(log *logrus.Entry, parsedHeader http.Header, headerConfig []header) {
+func (f *Filter) headerReplace(log logrus.FieldLogger, parsedHeader http.Header, headerConfig []Cheader) {
 	log.Debug("Checking if need to replace header")
 
 	for _, h := range headerConfig {
+		if h.Add {
+			if parsedHeader.Get(h.Name) == "" {
+				parsedHeader[h.Name] = []string{h.Value}
+			} else {
+				parsedHeader[h.Name] = append(parsedHeader[h.Name], h.Value)
+			}
+
+			log.Debug(fmt.Sprintf("Adding to header %s with value :  %s", h.Name, h.Value))
+
+			continue
+		}
+
 		if parsedHeader.Get(h.Name) == "" || h.Force {
-			parsedHeader.Set(h.Name, h.Value)
+			// parsedHeader.Set(h.Name, h.Value) // Use CanonicalMIMEHeaderKey that modify the key
+			parsedHeader[h.Name] = []string{h.Value}
 			log.Debug(fmt.Sprintf("Set header %s with value :  %s", h.Name, h.Value))
 		}
 	}
 }
 
-func (f *Filter) readAndReplaceBody(requestURL string, rep []replaceParameters, bod io.ReadCloser, parsedHeader http.Header) (int, io.ReadCloser, string, string, error) {
-	var originalBody string
-
-	var modifiedBody string
-
-	var contentLength int
-
-	var body io.ReadCloser
+func (f *Filter) readAndReplaceBody(
+	requestURL string,
+	rep []replaceParameters,
+	bod io.ReadCloser,
+	parsedHeader http.Header,
+) (int, io.ReadCloser, string, string, error) {
+	var (
+		originalBody  string
+		modifiedBody  string
+		contentLength int
+		body          io.ReadCloser
+		err           error
+	)
 
 	switch parsedHeader.Get("Content-Encoding") {
 	case "gzip":
-		body, _ = gzip.NewReader(bod)
+		body, err = gzip.NewReader(bod)
+		if err != nil {
+			f.log.Errorf("Impossible to decompress: %v", err)
+
+			return 0, nil, "", "", err
+		}
 		//		defer body.Close()
 	default:
 		body = bod
@@ -72,7 +99,7 @@ func (f *Filter) readAndReplaceBody(requestURL string, rep []replaceParameters, 
 
 	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", originalBody))
 
-	modifiedBody = do(requestURL, originalBody, rep)
+	modifiedBody = _do(requestURL, originalBody, rep)
 
 	f.log.Debug(fmt.Sprintf("Body after the replacement : %s", modifiedBody))
 

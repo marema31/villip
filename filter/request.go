@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -10,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//UpdateRequest will be called back when the request is received by the proxy.
+// UpdateRequest will be called back when the request is received by the proxy.
 func (f *Filter) UpdateRequest(r *http.Request) {
 	var contentLength int
 
@@ -19,7 +20,6 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 	var modifiedBody string
 
 	requestLog := f.log.WithFields(logrus.Fields{"url": r.URL.String(), "action": "request", "source": r.RemoteAddr})
-	requestLog.Debug("Request")
 
 	requestURL := strings.TrimPrefix(r.URL.String(), f.url)
 
@@ -30,17 +30,18 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 
 	data, err := httputil.DumpRequest(r, false)
 	if err != nil {
-		f.log.Error(fmt.Printf("Error"))
+		requestLog.Error("Error")
 	}
 
-	f.log.Debug(fmt.Sprintf("Request received\n %s", string(data)))
+	requestLog.Debug(fmt.Sprintf("Request received\n%s", string(bytes.Replace(data, []byte{13, 10}, []byte{10}, -1))))
 
-	//in request sometimes there is no body
+	// in request sometimes there is no body
 	if r.Body != nil {
-		contentLength, r.Body, originalBody, modifiedBody, err = f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
+		contentLength, r.Body, originalBody, modifiedBody, err =
+			f.readAndReplaceBody(requestURL, f.request.Replace, r.Body, r.Header)
 
 		if err != nil {
-			f.log.Fatal(err)
+			requestLog.Fatal(err)
 		}
 
 		requestID := ""
