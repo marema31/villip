@@ -33,7 +33,6 @@ func TestFilter_UpdateResponse(t *testing.T) {
 		wantBody    string
 		wantHeaders http.Header
 	}{
-		// TODO: Add more test cases. no body, no config, dumpURLS, requestId,mauvais contenttype /force, mauvais status/ force
 		{
 			"empty body",
 			fields{

@@ -172,25 +172,27 @@ func TestNewFromEnv(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock newFromConfig
-			var got filter.Config
-			filter.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, *filter.Filter) {
-				got = c
-				return "", 0, &filter.Filter{}
-			})
-
-			// Mock os.LookupEnv
-			filter.MockLookupEnv(func(key string) (string, bool) {
-				value, ok := tt.args.env[key]
-				return value, ok
-			})
 			// Use logrus abilities to test log.Fatal
 			log, hook := logrustest.NewNullLogger()
 			log.ExitFunc = func(int) { return }
 			defer func() { log.ExitFunc = nil }()
 			log.SetLevel(logrus.DebugLevel)
 
-			filter.NewFromEnv(log)
+			factory := filter.NewFactory(log).(*filter.Factory)
+			// Mock newFromConfig
+			var got filter.Config
+			factory.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, filter.FilteredServer) {
+				got = c
+				return "", 0, &filter.Filter{}
+			})
+
+			// Mock os.LookupEnv
+			factory.MockLookupEnv(func(key string) (string, bool) {
+				value, ok := tt.args.env[key]
+				return value, ok
+			})
+
+			factory.NewFromEnv()
 
 			fatal := filter.HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {

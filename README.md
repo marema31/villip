@@ -30,7 +30,7 @@ VILLIP_FOR_XX     | no        | Comma separated list of urls concerned by this X
 VILLIP_FROM_XX    | no        | XX string to search (XX = number starting at 1)
 VILLIP_TO_XX      | no        | Replacement for the corresponding VILLIP_FROM_XX string
 VILLIP_PORT       | no        | Port of proxy (8080 by default)
-VILLIP_PRIORITY   | no        | Priority of the filter (0 by default)
+VILLIP_PRIORITY   | no        | Priority of the filter (0 by default, the greatest priority first)
 VILLIP_RESTRICTED | no        | Comma separated list of networks authorized to use this proxy (no restriction if empty), localhost is always authorized
 VILLIP_TYPES      | no        | Comma separated list of content type that will be filtered (by default text/html, text/css, application/javascript)
 VILLIP_URL        | yes       | Base url of the proxyfied site

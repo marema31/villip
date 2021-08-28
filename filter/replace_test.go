@@ -351,7 +351,6 @@ func TestFilter_readAndReplaceBody(t *testing.T) {
 			false,
 			[]string{"Body before the replacement : hello world", "Body after the replacement : dlrow olleh. hello earth"},
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

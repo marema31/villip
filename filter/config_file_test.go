@@ -134,20 +134,21 @@ func TestNewFromYAML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock newFromConfig
-			var got filter.Config
-			filter.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, *filter.Filter) {
-				got = c
-				return "", 0, &filter.Filter{}
-			})
-
 			// Use logrus abilities to test log.Fatal
 			log, hook := logrustest.NewNullLogger()
 			log.ExitFunc = func(int) { return }
 			defer func() { log.ExitFunc = nil }()
 			log.SetLevel(logrus.DebugLevel)
 
-			filter.NewFromYAML(log, tt.args.filePath)
+			factory := filter.NewFactory(log).(*filter.Factory)
+			// Mock newFromConfig
+			var got filter.Config
+			factory.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, filter.FilteredServer) {
+				got = c
+				return "", 0, &filter.Filter{}
+			})
+
+			factory.NewFromYAML(tt.args.filePath)
 
 			fatal := filter.HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {
@@ -290,20 +291,21 @@ func TestNewFromJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock newFromConfig
-			var got filter.Config
-			filter.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, *filter.Filter) {
-				got = c
-				return "", 0, &filter.Filter{}
-			})
-
 			// Use logrus abilities to test log.Fatal
 			log, hook := logrustest.NewNullLogger()
 			log.ExitFunc = func(int) { return }
 			defer func() { log.ExitFunc = nil }()
 			log.SetLevel(logrus.DebugLevel)
 
-			filter.NewFromJSON(log, tt.args.filePath)
+			factory := filter.NewFactory(log).(*filter.Factory)
+			// Mock newFromConfig
+			var got filter.Config
+			factory.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, filter.FilteredServer) {
+				got = c
+				return "", 0, &filter.Filter{}
+			})
+
+			factory.NewFromJSON(tt.args.filePath)
 
 			fatal := filter.HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {

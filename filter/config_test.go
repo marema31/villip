@@ -12,12 +12,12 @@ import (
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 )
 
-func MockNewFromConfig(f func(logrus.FieldLogger, Config) (string, uint8, *Filter)) {
-	_newFromConfig = f
+func (fact *Factory) MockNewFromConfig(f fNewConfig) {
+	fact.newFromConfig = f
 }
 
-func MockLookupEnv(f func(string) (string, bool)) {
-	_LookupEnv = f
+func (fact *Factory) MockLookupEnv(f func(string) (string, bool)) {
+	fact.lookupEnv = f
 }
 
 func Test_newFromConfig(t *testing.T) {
@@ -678,7 +678,8 @@ func Test_newFromConfig(t *testing.T) {
 			log.SetLevel(logrus.DebugLevel)
 			tt.want2.log = nil
 
-			got, got1, got2 := newFromConfig(log, tt.args.c)
+			factory := NewFactory(log).(*Factory)
+			got, got1, got2 := factory.newFromConfig(log, tt.args.c)
 
 			fatal := HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {
@@ -697,10 +698,11 @@ func Test_newFromConfig(t *testing.T) {
 			}
 
 			// This field is not interesting for our tests and make DeepEqual impossible
-			got2.log = nil
+			g2 := got2.(*Filter)
+			g2.log = nil
 
-			if !reflect.DeepEqual(got2, tt.want2) {
-				t.Errorf("newFromConfig() \ngot2 = %#v,\nwant = %#v", got2, tt.want2)
+			if !reflect.DeepEqual(g2, tt.want2) {
+				t.Errorf("newFromConfig() \ngot2 = %#v,\nwant = %#v", g2, tt.want2)
 			}
 		})
 	}
