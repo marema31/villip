@@ -7,7 +7,7 @@ import (
 )
 
 //NewFromEnv instantiate a Filter object from the environment variable configuration.
-//nolint: funlen
+//nolint: funlen,gocognit
 func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 	var ok bool
 
@@ -68,6 +68,7 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 	c.Response.Header = make([]Cheader, 0)
 	c.Request.Replace = make([]Creplacement, 0)
 	c.Response.Replace = make([]Creplacement, 0)
+	c.Prefix = make([]Creplacement, 0)
 
 	if from, ok = f.lookupEnv("VILLIP_FROM"); ok {
 		if to, ok = f.lookupEnv("VILLIP_TO"); !ok {
@@ -113,6 +114,16 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 
 	if dumpURLs, ok := f.lookupEnv("VILLIP_DUMPURLS"); ok {
 		c.Dump.URLs = strings.Split(strings.Replace(dumpURLs, " ", "", -1), ",")
+	}
+
+	from, ok = f.lookupEnv("VILLIP_PREFIX_FROM")
+	if ok {
+		to, ok = f.lookupEnv("VILLIP_PREFIX_TO")
+		if !ok {
+			f.log.Fatalf("Missing VILLIP_PREFIX_TO environment variable", i)
+		}
+
+		c.Prefix = []Creplacement{{From: from, To: to, Urls: []string{}}}
 	}
 
 	return f.newFromConfig(f.log, c)

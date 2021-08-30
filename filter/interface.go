@@ -10,4 +10,5 @@ type FilteredServer interface {
 	IsConcerned(net.IP, http.Header) bool
 	Serve(http.ResponseWriter, *http.Request)
 	IsConditional() bool
+	PrefixReplace(string) string
 }

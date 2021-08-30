@@ -47,6 +47,7 @@ func (s *Server) ConditionalProxy(res http.ResponseWriter, req *http.Request) {
 
 	for _, f := range s.filters {
 		if f.IsConcerned(ip, req.Header) {
+			req.URL.Path = f.PrefixReplace(req.URL.Path)
 			f.Serve(res, req)
 
 			return

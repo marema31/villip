@@ -30,6 +30,10 @@ func (m *mockFilter) IsConditional() bool {
 	return true
 }
 
+func (m *mockFilter) PrefixReplace(URL string) string {
+	return URL
+}
+
 func (m *mockFilter) Serve(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(m.resBody))
 	h := res.Header()

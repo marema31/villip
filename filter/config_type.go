@@ -41,6 +41,7 @@ type Config struct {
 	Force        bool           `yaml:"force" json:"force"`
 	Insecure     bool           `yaml:"insecure" json:"insecure"`
 	Port         int            `yaml:"port" json:"port"`
+	Prefix       []Creplacement `yaml:"prefix" json:"prefix"`
 	Priority     uint8          `yaml:"priority" json:"priority"`
 	Replace      []Creplacement `yaml:"replace" json:"replace"`
 	Request      Caction        `yaml:"request" json:"request"`

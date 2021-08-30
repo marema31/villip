@@ -124,7 +124,7 @@ func (f *Filter) location(requestLog logrus.FieldLogger, r *http.Response, reque
 
 	if location != "" {
 		origLocation := location
-		location = do(requestURL, location, f.response.Replace)
+		location = do(requestURL, location, f.response.Replace, false)
 
 		requestLog.
 			WithFields(logrus.Fields{"location": origLocation, "rewrited_location": location}).

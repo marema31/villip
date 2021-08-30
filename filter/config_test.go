@@ -157,6 +157,7 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix:   []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{},
 					Header:  []Cheader{},
@@ -190,6 +191,7 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: true,
 				force:    false,
+				prefix:   []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{},
 					Header:  []Cheader{},
@@ -227,14 +229,15 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    true,
+				prefix:   []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{
 						{
 							from: "book",
 							to:   "smartphone",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/youngster"),
-								regexp.MustCompile("/children"),
+								regexp.MustCompile("^/youngster"),
+								regexp.MustCompile("^/children"),
 							},
 						},
 					},
@@ -276,14 +279,15 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix:   []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{
 						{
 							from: "book",
 							to:   "smartphone",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/youngster"),
-								regexp.MustCompile("/children"),
+								regexp.MustCompile("^/youngster"),
+								regexp.MustCompile("^/children"),
 							},
 						},
 					},
@@ -330,13 +334,14 @@ func Test_newFromConfig(t *testing.T) {
 							from: "book",
 							to:   "smartphone",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/youngster"),
-								regexp.MustCompile("/children"),
+								regexp.MustCompile("^/youngster"),
+								regexp.MustCompile("^/children"),
 							},
 						},
 					},
 					Header: []Cheader{},
 				},
+				prefix: []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{},
 					Header:  []Cheader{},
@@ -381,14 +386,15 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix:   []replaceParameters{},
 				request: request{
 					Replace: []replaceParameters{
 						{
 							from: "book",
 							to:   "smartphone",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/youngster"),
-								regexp.MustCompile("/children"),
+								regexp.MustCompile("^/youngster"),
+								regexp.MustCompile("^/children"),
 							},
 						},
 					},
@@ -400,8 +406,8 @@ func Test_newFromConfig(t *testing.T) {
 							from: "videogame",
 							to:   "boardgame",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/boomer"),
-								regexp.MustCompile("/grandparent"),
+								regexp.MustCompile("^/boomer"),
+								regexp.MustCompile("^/grandparent"),
 							},
 						},
 					},
@@ -417,10 +423,17 @@ func Test_newFromConfig(t *testing.T) {
 			},
 		},
 		{
-			"responserequestHeader",
+			"responserequestHeaderPrefix",
 			args{
 				Config{
 					URL: "http://localhost:8081",
+					Prefix: []Creplacement{
+						{
+							From: "/env",
+							To:   "/dev/env",
+							Urls: []string{"/env/admin", "/env/health"},
+						},
+					},
 					Request: Caction{
 						Replace: []Creplacement{
 							{
@@ -470,14 +483,24 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix: []replaceParameters{
+					{
+						from: "/env",
+						to:   "/dev/env",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/env/admin"),
+							regexp.MustCompile("^/env/health"),
+						},
+					},
+				},
 				request: request{
 					Replace: []replaceParameters{
 						{
 							from: "book",
 							to:   "smartphone",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/youngster"),
-								regexp.MustCompile("/children"),
+								regexp.MustCompile("^/youngster"),
+								regexp.MustCompile("^/children"),
 							},
 						},
 					},
@@ -500,8 +523,8 @@ func Test_newFromConfig(t *testing.T) {
 							from: "videogame",
 							to:   "boardgame",
 							urls: []*regexp.Regexp{
-								regexp.MustCompile("/boomer"),
-								regexp.MustCompile("/grandparent"),
+								regexp.MustCompile("^/boomer"),
+								regexp.MustCompile("^/grandparent"),
 							},
 						},
 					},
@@ -567,6 +590,7 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix:   []replaceParameters{},
 				request: request{
 					Replace: []replaceParameters{},
 					Header: []Cheader{
@@ -634,6 +658,7 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{
 				insecure: false,
 				force:    false,
+				prefix:   []replaceParameters{},
 				response: response{
 					Replace: []replaceParameters{},
 					Header:  []Cheader{},
@@ -702,7 +727,20 @@ func Test_newFromConfig(t *testing.T) {
 			g2.log = nil
 
 			if !reflect.DeepEqual(g2, tt.want2) {
-				t.Errorf("newFromConfig() \ngot2 = %#v,\nwant = %#v", g2, tt.want2)
+				switch {
+				case !reflect.DeepEqual(g2.response, tt.want2.response):
+					t.Errorf("newFromConfig(response) \ngot2 = %#v,\nwant = %#v", g2.response, tt.want2.response)
+					t.Errorf("newFromConfig(response.urls) \ngot2 = %#v,\nwant = %#v", g2.response.Replace[0].urls[0], tt.want2.response.Replace[0].urls[0])
+				case !reflect.DeepEqual(g2.request, tt.want2.request):
+					t.Errorf("newFromConfig(request) \ngot2 = %#v,\nwant = %#v", g2.request, tt.want2.request)
+					t.Errorf("newFromConfig(request.urls) \ngot2 = %#v,\nwant = %#v", g2.request.Replace[0].urls[0], tt.want2.request.Replace[0].urls[0])
+				case !reflect.DeepEqual(g2.prefix, tt.want2.prefix):
+					t.Errorf("newFromConfig(prefix) \ngot2 = %#v,\nwant = %#v", g2.prefix, tt.want2.prefix)
+				case !reflect.DeepEqual(g2.token, tt.want2.token):
+					t.Errorf("newFromConfig(token) \ngot2 = %#v,\nwant = %#v", g2.token, tt.want2.token)
+				default:
+					t.Errorf("newFromConfig() \ngot2 = %#v,\nwant = %#v", g2, tt.want2)
+				}
 			}
 		})
 	}
@@ -732,7 +770,7 @@ func Test_parseReplaceConfig(t *testing.T) {
 				{
 					from: "from",
 					to:   "to",
-					urls: []*regexp.Regexp{regexp.MustCompile("/")},
+					urls: []*regexp.Regexp{regexp.MustCompile("^/")},
 				},
 			},
 		},
@@ -756,16 +794,16 @@ func Test_parseReplaceConfig(t *testing.T) {
 					from: "from",
 					to:   "to",
 					urls: []*regexp.Regexp{
-						regexp.MustCompile("/test1/mul"),
-						regexp.MustCompile("/test2"),
+						regexp.MustCompile("^/test1/mul"),
+						regexp.MustCompile("^/test2"),
 					},
 				},
 				{
 					from: "to",
 					to:   "from",
 					urls: []*regexp.Regexp{
-						regexp.MustCompile("/test3/mul"),
-						regexp.MustCompile("/test4"),
+						regexp.MustCompile("^/test3/mul"),
+						regexp.MustCompile("^/test4"),
 					},
 				},
 			},

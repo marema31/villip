@@ -17,6 +17,10 @@ func parseReplaceConfig(log logrus.FieldLogger, rep []Creplacement) []replacePar
 		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
 
 		for _, reg := range r.Urls {
+			if !strings.HasPrefix(reg, "^") {
+				reg = "^" + reg
+			}
+
 			r, err := regexp.Compile(reg)
 			if err != nil {
 				log.Fatalf("Failed to compile '%s' regular expression: %v", reg, err)
@@ -147,6 +151,11 @@ func genNewFromConfig() fNewConfig {
 			f.response.Header = c.Response.Header
 		}
 
+		f.prefix = make([]replaceParameters, 0)
+		if len(c.Prefix) > 0 {
+			f.prefix = parseReplaceConfig(f.log, c.Prefix)
+		}
+
 		f.restricted = []*net.IPNet{}
 
 		f.token = make(map[string][]headerConditions)
@@ -164,6 +173,8 @@ func genNewFromConfig() fNewConfig {
 			_, ipnet, err := net.ParseCIDR(ip)
 			if err != nil {
 				f.log.Fatal(fmt.Sprintf("\"%s\" in restricted parameter is not a valid CIDR", ip))
+
+				return "0", 0, &Filter{}
 			}
 
 			f.restricted = append(f.restricted, ipnet)

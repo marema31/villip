@@ -16,9 +16,10 @@ import (
 
 func Test_do(t *testing.T) {
 	type args struct {
-		url string
-		s   string
-		rep []replaceParameters
+		url    string
+		s      string
+		rep    []replaceParameters
+		prefix bool
 	}
 	tests := []struct {
 		name string
@@ -31,6 +32,7 @@ func Test_do(t *testing.T) {
 				"http://localhost:8080/youngster",
 				"take your book,\ntry to dance\n sing often",
 				[]replaceParameters{},
+				false,
 			},
 			"take your book,\ntry to dance\n sing often",
 		},
@@ -65,6 +67,7 @@ func Test_do(t *testing.T) {
 						},
 					},
 				},
+				false,
 			},
 			"take your smartphone,\ntry to dance\n chat often",
 		},
@@ -99,13 +102,14 @@ func Test_do(t *testing.T) {
 						},
 					},
 				},
+				false,
 			},
 			"take your book,\ntry to dance\n sing often",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := do(tt.args.url, tt.args.s, tt.args.rep); got != tt.want {
+			if got := do(tt.args.url, tt.args.s, tt.args.rep, tt.args.prefix); got != tt.want {
 				t.Errorf("do() = %v, want %v", got, tt.want)
 			}
 		})
@@ -361,7 +365,7 @@ func TestFilter_readAndReplaceBody(t *testing.T) {
 			}
 
 			oldDo := _do
-			_do = func(url string, s string, rep []replaceParameters) string {
+			_do = func(url string, s string, rep []replaceParameters, prefix bool) string {
 				return tt.args.newbod
 			}
 			defer func() { _do = oldDo }()

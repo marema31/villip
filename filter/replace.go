@@ -15,7 +15,7 @@ import (
 // Mockable function.
 var _do = do //nolint: gochecknoglobals
 
-func do(url string, s string, rep []replaceParameters) string {
+func do(url string, s string, rep []replaceParameters, prefix bool) string {
 	for _, r := range rep {
 		if len(r.urls) != 0 {
 			found := false
@@ -33,7 +33,11 @@ func do(url string, s string, rep []replaceParameters) string {
 			}
 		}
 
-		s = strings.Replace(s, r.from, r.to, -1)
+		if prefix {
+			s = r.to + s[len(r.from):]
+		} else {
+			s = strings.Replace(s, r.from, r.to, -1)
+		}
 	}
 
 	return s
@@ -99,7 +103,7 @@ func (f *Filter) readAndReplaceBody(
 
 	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", originalBody))
 
-	modifiedBody = _do(requestURL, originalBody, rep)
+	modifiedBody = _do(requestURL, originalBody, rep, false)
 
 	f.log.Debug(fmt.Sprintf("Body after the replacement : %s", modifiedBody))
 
@@ -120,4 +124,8 @@ func (f *Filter) readAndReplaceBody(
 	}
 
 	return contentLength, body, originalBody, modifiedBody, nil
+}
+
+func (f *Filter) PrefixReplace(URL string) string {
+	return do(URL, URL, f.prefix, true)
 }

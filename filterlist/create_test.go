@@ -30,6 +30,10 @@ func (m *mockFilter) IsConditional() bool {
 func (m *mockFilter) Serve(res http.ResponseWriter, req *http.Request) {
 }
 
+func (m *mockFilter) PrefixReplace(URL string) string {
+	return URL
+}
+
 func TestList_insert(t *testing.T) {
 	type fields struct {
 		filters map[string]map[uint8][]filter.FilteredServer

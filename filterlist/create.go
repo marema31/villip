@@ -21,7 +21,7 @@ type List struct {
 
 // New returns a new empty filter list.
 func New() *List {
-	return &List{lookupEnv: os.LookupEnv}
+	return &List{lookupEnv: os.LookupEnv, filters: make(map[string]map[uint8][]filter.FilteredServer)}
 }
 
 func (fl *List) insert(port string, priority uint8, f filter.FilteredServer) {
