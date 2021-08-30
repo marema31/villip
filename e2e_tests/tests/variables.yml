@@ -1,0 +1,3 @@
+villip_server: "{{.VILLIP_SERVER}}"
+villip_port1: "{{.VILLIP_PORT1}}"
+villip_port2: "{{.VILLIP_PORT2}}"

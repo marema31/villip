@@ -1,0 +1,68 @@
+- request:
+    path: /normal/301
+    method: GET
+  response:
+    status: 301
+    headers:
+      Content-Type: text/html
+    body: >
+        site:normal
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /normal/302
+    method: GET
+  response:
+    status: 302
+    headers:
+      Content-Type: text/html
+    body: >
+        site:normal
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path:
+      matcher: ShouldMatch
+      value: /normal/request/.*
+    method: GET
+  response:
+    status: 200
+  dynamic_response:
+    engine: go_template
+    script: >
+      headers:
+        Content-Type: [text/html]
+        X-Received: {{ index .Request.Headers "X-TBM"}}
+      body: >
+        site:normal
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path:
+      matcher: ShouldMatch
+      value: /normal/response/.*
+    method: GET
+  response:
+    status: 200
+  dynamic_response:
+    engine: go_template
+    script: >
+      headers:
+        Content-Type: [text/html]
+        X-Received: {{ index .Request.Headers "X-TBM"}}
+        X-TBM: The message is here
+      body: >
+        site:normal
+        {{.Request.Body}}
+
+        @@@
+        take your book,
+        play videogames,
+        try to dance,
+        sing often

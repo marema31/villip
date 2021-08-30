@@ -60,9 +60,10 @@ $(BIN)/go2xunit: PACKAGE=github.com/tebeka/go2xunit
 TEST_TARGETS := test-default test-bench test-short test-verbose test-race
 .PHONY: $(TEST_TARGETS) test-xml check test tests
 test-bench:   ARGS=-run=__absolutelynothing__ -bench=. ## Run benchmarks
-test-short:   ARGS=-short        ## Run only short tests
-test-verbose: ARGS=-v            ## Run tests in verbose mode with coverage reporting
-test-race:    ARGS=-race         ## Run tests with race detector
+test-short:   ARGS=-short                              ## Run only short tests
+test-verbose: ARGS=-v                                  ## Run tests in verbose mode with coverage reporting
+test-race:    ARGS=-race                               ## Run tests with race detector
+test-integration:    ARGS=-run Integration            ## Run tests with race detector
 $(TEST_TARGETS): NAME=$(MAKECMDGOALS:test-%=%)
 $(TEST_TARGETS): test
 check test tests: fmt lint ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run tests

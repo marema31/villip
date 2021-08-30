@@ -1,0 +1,58 @@
+name: HTTP Server Tests
+testcases:
+  - name: smocker must be started
+    steps:
+      - type: http
+        method: GET
+        url: "http://smocker:8080/"
+        assertions:
+          - result.statuscode ShouldEqual 666
+  - name: villip must be started
+    steps:
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/"
+        assertions:
+          - result.statuscode ShouldEqual 666
+  - name : priority
+    steps:
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        headers:
+          X-Level: urgent
+          X-Type: vip
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        headers:
+          X-Level: urgent
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        headers:
+          X-Level: normal
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        headers:
+          X-Level: low
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:low"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        headers:
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:env"
