@@ -72,6 +72,35 @@ func Test_do(t *testing.T) {
 			"take your smartphone,\ntry to dance\n chat often",
 		},
 		{
+			"replaced no urls",
+			args{
+				"/youngster/admin",
+				"take your book,\ntry to dance\n sing often",
+				[]replaceParameters{
+					{
+						from: "videogame",
+						to:   "boardgame",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/boomer"),
+							regexp.MustCompile("^/grandparent"),
+						},
+					},
+					{
+						from: "sing",
+						to:   "chat",
+						urls: []*regexp.Regexp{},
+					},
+					{
+						from: "book",
+						to:   "smartphone",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				false,
+			},
+			"take your smartphone,\ntry to dance\n chat often",
+		},
+		{
 			"not replaced",
 			args{
 				"/parent",

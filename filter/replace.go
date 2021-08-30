@@ -34,7 +34,9 @@ func do(url string, s string, rep []replaceParameters, prefix bool) string {
 		}
 
 		if prefix {
-			s = r.to + s[len(r.from):]
+			if len(s) > len(r.from) {
+				s = r.to + s[len(r.from):]
+			}
 		} else {
 			s = strings.Replace(s, r.from, r.to, -1)
 		}
