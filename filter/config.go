@@ -10,13 +10,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func parseReplaceConfig(log logrus.FieldLogger, rep []Creplacement) []replaceParameters {
+func parseReplaceConfig(log logrus.FieldLogger, rep []Creplacement, prefix []replaceParameters) []replaceParameters {
 	result := make([]replaceParameters, 0)
 
 	for _, r := range rep {
 		p := replaceParameters{from: r.From, to: r.To, urls: []*regexp.Regexp{}}
 
 		for _, reg := range r.Urls {
+			reg = _do(reg, reg, prefix, true)
+
 			if !strings.HasPrefix(reg, "^") {
 				reg = "^" + reg
 			}
@@ -120,6 +122,11 @@ func genNewFromConfig() fNewConfig {
 		f.force = c.Force
 		f.insecure = c.Insecure
 
+		f.prefix = make([]replaceParameters, 0) //Must be before request and response
+		if len(c.Prefix) > 0 {
+			f.prefix = parseReplaceConfig(f.log, c.Prefix, []replaceParameters{})
+		}
+
 		responseReplace := make([]Creplacement, 0)
 
 		switch {
@@ -133,12 +140,12 @@ func genNewFromConfig() fNewConfig {
 
 		f.response.Replace = make([]replaceParameters, 0)
 		if len(responseReplace) > 0 {
-			f.response.Replace = parseReplaceConfig(f.log, responseReplace)
+			f.response.Replace = parseReplaceConfig(f.log, responseReplace, f.prefix)
 		}
 
 		f.request.Replace = make([]replaceParameters, 0)
 		if len(c.Request.Replace) > 0 {
-			f.request.Replace = parseReplaceConfig(f.log, c.Request.Replace)
+			f.request.Replace = parseReplaceConfig(f.log, c.Request.Replace, f.prefix)
 		}
 
 		f.request.Header = make([]Cheader, 0)
@@ -149,11 +156,6 @@ func genNewFromConfig() fNewConfig {
 		f.response.Header = make([]Cheader, 0)
 		if len(c.Response.Header) > 0 {
 			f.response.Header = c.Response.Header
-		}
-
-		f.prefix = make([]replaceParameters, 0)
-		if len(c.Prefix) > 0 {
-			f.prefix = parseReplaceConfig(f.log, c.Prefix)
 		}
 
 		f.restricted = []*net.IPNet{}

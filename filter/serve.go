@@ -41,5 +41,7 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 	proxy.Transport = &transport
 
 	f.log.Debug("proxying")
+
+	req.URL.Path = f.PrefixReplace(req.URL.Path)
 	proxy.ServeHTTP(res, req)
 }

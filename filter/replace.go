@@ -129,5 +129,5 @@ func (f *Filter) readAndReplaceBody(
 }
 
 func (f *Filter) PrefixReplace(URL string) string {
-	return do(URL, URL, f.prefix, true)
+	return _do(URL, URL, f.prefix, true)
 }
