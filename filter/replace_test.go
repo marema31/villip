@@ -16,9 +16,10 @@ import (
 
 func Test_do(t *testing.T) {
 	type args struct {
-		url string
-		s   string
-		rep []replaceParameters
+		url    string
+		s      string
+		rep    []replaceParameters
+		prefix bool
 	}
 	tests := []struct {
 		name string
@@ -28,84 +29,191 @@ func Test_do(t *testing.T) {
 		{
 			"nothing",
 			args{
-				"http://localhost:8080/youngster",
+				"/youngster",
 				"take your book,\ntry to dance\n sing often",
 				[]replaceParameters{},
+				false,
 			},
 			"take your book,\ntry to dance\n sing often",
 		},
 		{
 			"replaced",
 			args{
-				"http://localhost:8080/youngster",
+				"/youngster/admin",
 				"take your book,\ntry to dance\n sing often",
 				[]replaceParameters{
 					{
 						from: "videogame",
 						to:   "boardgame",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/boomer"),
-							regexp.MustCompile("/grandparent"),
+							regexp.MustCompile("^/boomer"),
+							regexp.MustCompile("^/grandparent"),
 						},
 					},
 					{
 						from: "sing",
 						to:   "chat",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/youngster"),
-							regexp.MustCompile("/children"),
+							regexp.MustCompile("^/youngster"),
+							regexp.MustCompile("^/children"),
 						},
 					},
 					{
 						from: "book",
 						to:   "smartphone",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/youngster"),
-							regexp.MustCompile("/children"),
+							regexp.MustCompile("^/youngster"),
+							regexp.MustCompile("^/children"),
 						},
 					},
 				},
+				false,
 			},
 			"take your smartphone,\ntry to dance\n chat often",
 		},
 		{
-			"replaced",
+			"replaced no urls",
 			args{
-				"http://localhost:8080/parent",
+				"/youngster/admin",
 				"take your book,\ntry to dance\n sing often",
 				[]replaceParameters{
 					{
 						from: "videogame",
 						to:   "boardgame",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/boomer"),
-							regexp.MustCompile("/grandparent"),
+							regexp.MustCompile("^/boomer"),
+							regexp.MustCompile("^/grandparent"),
+						},
+					},
+					{
+						from: "sing",
+						to:   "chat",
+						urls: []*regexp.Regexp{},
+					},
+					{
+						from: "book",
+						to:   "smartphone",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				false,
+			},
+			"take your smartphone,\ntry to dance\n chat often",
+		},
+		{
+			"not replaced",
+			args{
+				"/parent",
+				"take your book,\ntry to dance\n sing often",
+				[]replaceParameters{
+					{
+						from: "videogame",
+						to:   "boardgame",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/boomer"),
+							regexp.MustCompile("^/grandparent"),
 						},
 					},
 					{
 						from: "sing",
 						to:   "chat",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/youngster"),
-							regexp.MustCompile("/children"),
+							regexp.MustCompile("^/youngster"),
+							regexp.MustCompile("^/children"),
 						},
 					},
 					{
 						from: "book",
 						to:   "smartphone",
 						urls: []*regexp.Regexp{
-							regexp.MustCompile("/youngster"),
-							regexp.MustCompile("/children"),
+							regexp.MustCompile("^/youngster"),
+							regexp.MustCompile("^/children"),
 						},
 					},
 				},
+				false,
 			},
 			"take your book,\ntry to dance\n sing often",
+		},
+		{
+			"not all replaced url not at beginning",
+			args{
+				"/youngster/admin",
+				"take your book,\ntry to dance\n sing often",
+				[]replaceParameters{
+					{
+						from: "sing",
+						to:   "chat",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^admin"),
+							regexp.MustCompile("^health"),
+						},
+					},
+					{
+						from: "book",
+						to:   "smartphone",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/youngster"),
+							regexp.MustCompile("^/children"),
+						},
+					},
+				},
+				false,
+			},
+			"take your smartphone,\ntry to dance\n sing often",
+		},
+		{
+			"prefix replaced longer",
+			args{
+				"/youngster/admin",
+				"/youngster/admin",
+				[]replaceParameters{
+					{
+						from: "/youngster/",
+						to:   "/child/",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				true,
+			},
+			"/child/admin",
+		},
+		{
+			"prefix replaced shorter",
+			args{
+				"/child/admin",
+				"/child/admin",
+				[]replaceParameters{
+					{
+						from: "/child/",
+						to:   "/youngster/",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				true,
+			},
+			"/youngster/admin",
+		},
+		{
+			"prefix replaced equal",
+			args{
+				"/young/admin",
+				"/young/admin",
+				[]replaceParameters{
+					{
+						from: "/young/",
+						to:   "/child/",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				true,
+			},
+			"/child/admin",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := do(tt.args.url, tt.args.s, tt.args.rep); got != tt.want {
+			if got := do(tt.args.url, tt.args.s, tt.args.rep, tt.args.prefix); got != tt.want {
 				t.Errorf("do() = %v, want %v", got, tt.want)
 			}
 		})
@@ -351,7 +459,6 @@ func TestFilter_readAndReplaceBody(t *testing.T) {
 			false,
 			[]string{"Body before the replacement : hello world", "Body after the replacement : dlrow olleh. hello earth"},
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -362,12 +469,12 @@ func TestFilter_readAndReplaceBody(t *testing.T) {
 			}
 
 			oldDo := _do
-			_do = func(url string, s string, rep []replaceParameters) string {
+			_do = func(url string, s string, rep []replaceParameters, prefix bool) string {
 				return tt.args.newbod
 			}
 			defer func() { _do = oldDo }()
 
-			got, got1, got2, got3, err := f.readAndReplaceBody("http://localhost:8080", []replaceParameters{}, tt.args.bod, tt.args.parsedHeader)
+			got, got1, got2, got3, err := f.readAndReplaceBody("", []replaceParameters{}, tt.args.bod, tt.args.parsedHeader)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Filter.readAndReplaceBody() error = %v, wantErr %v", err, tt.wantErr)
@@ -388,6 +495,84 @@ func TestFilter_readAndReplaceBody(t *testing.T) {
 			}
 
 			verifyLogged("Filter.readAndReplaceBody", tt.wantLog, hook, t)
+		})
+	}
+}
+
+func TestFilter_PrefixReplace(t *testing.T) {
+	type fields struct {
+		prefix []replaceParameters
+	}
+	type args struct {
+		URL string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			"no prefix",
+			fields{[]replaceParameters{}},
+			args{"/youngster/admin"},
+			"/youngster/admin",
+		},
+		{
+			"not replaced",
+			fields{[]replaceParameters{
+				{
+					from: "/youngster/",
+					to:   "/child/",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^/youngster/admin"),
+						regexp.MustCompile("^/youngster/health"),
+					},
+				},
+			}},
+			args{"/youngster/user"},
+			"/youngster/user",
+		},
+		{
+			"not replaced urls not prefix",
+			fields{[]replaceParameters{
+				{
+					from: "/youngster/",
+					to:   "/child/",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^admin"),
+						regexp.MustCompile("^health"),
+					},
+				},
+			}},
+			args{"/youngster/admin"},
+			"/youngster/admin",
+		},
+		{
+			"replaced",
+			fields{[]replaceParameters{
+				{
+					from: "/youngster/",
+					to:   "/child/",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^/youngster/admin"),
+						regexp.MustCompile("^/youngster/health"),
+					},
+				},
+			}},
+			args{"/youngster/admin"},
+			"/child/admin",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &Filter{
+				prefix: tt.fields.prefix,
+				log:    logrus.New(),
+			}
+			if got := f.PrefixReplace(tt.args.URL); got != tt.want {
+				t.Errorf("Filter.PrefixReplace() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

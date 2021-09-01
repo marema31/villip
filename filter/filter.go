@@ -52,10 +52,12 @@ type Filter struct {
 	response     response
 	request      request
 	contentTypes []string
+	status       []int
 	restricted   []*net.IPNet
 	token        map[string][]headerConditions
 	url          string
 	port         string
+	prefix       []replaceParameters
 	priority     string
 	log          logrus.FieldLogger // Interface for Logger and Entry
 	dumpFolder   string

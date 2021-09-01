@@ -33,7 +33,6 @@ func TestFilter_UpdateResponse(t *testing.T) {
 		wantBody    string
 		wantHeaders http.Header
 	}{
-		// TODO: Add more test cases. no body, no config, dumpURLS, requestId,mauvais contenttype /force, mauvais status/ force
 		{
 			"empty body",
 			fields{
@@ -543,6 +542,7 @@ func TestFilter_toFilter(t *testing.T) {
 
 			f := &Filter{
 				contentTypes: []string{"text/html", "application/json"},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			}
 
 			if got := f.toFilter(log, &r); got != tt.want {

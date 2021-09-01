@@ -30,10 +30,13 @@ VILLIP_FOR_XX     | no        | Comma separated list of urls concerned by this X
 VILLIP_FROM_XX    | no        | XX string to search (XX = number starting at 1)
 VILLIP_TO_XX      | no        | Replacement for the corresponding VILLIP_FROM_XX string
 VILLIP_PORT       | no        | Port of proxy (8080 by default)
-VILLIP_PRIORITY   | no        | Priority of the filter (0 by default)
+VILLIP_PREFIX_FROM| no        | Prefix of request URL to replace when calling the proxified service
+VILLIP_PREFIX_TO  | no        | Replacement value for the prefix of request URL when calling the proxified service
+VILLIP_PRIORITY   | no        | Priority of the filter (0 by default, the greatest priority first)
+VILLIP_STATUS     | no        | Comma separated list of HTTP status code that will be filtered (Codes 200[OK], 301[Moved Permanently] and 302[Found] will always been filtered)
 VILLIP_RESTRICTED | no        | Comma separated list of networks authorized to use this proxy (no restriction if empty), localhost is always authorized
 VILLIP_TYPES      | no        | Comma separated list of content type that will be filtered (by default text/html, text/css, application/javascript)
-VILLIP_URL        | yes       | Base url of the proxyfied site
+VILLIP_URL        | yes       | Base url of the proxyfied site (**Note**: this URL must not contains URN (also called endpoint) if you need to proxify to a subpart of a site use VILLIP_PREFIX_* variable with VILLIP_URL)
 
 ## YAML/JSON configuration files
 Each YAML/JSON files in the folder pointed by VILLIP_FOLDER environment variable contains the configuration of a filter, the format of these files correspond the same parameter in environment variable formet.
@@ -44,12 +47,17 @@ The example below give the overall YAML structure of configuration file when usi
 ---
 port: 8081
 force: true
-url: "http://localhost:1234/url1"
+url: "http://localhost:1234"
 dump:
   folder: /var/log/villip/dump
   urls:
     - /books/
     - /movies/
+prefix:
+  - from: "/"
+    to: "/sub/endpoint/"
+    urls:
+      - /url1/youngster/
 response:         #the http response config part
   replace:
     - from: "book"
@@ -104,6 +112,9 @@ token:
 content-types:
   - "text/html"
   - "application/json"
+status:
+  - 201
+  - 202
 ```
 ## Conditionnal proxy
 More than one file can refer to the same port, in this case all except one must have at a `token` or `restricted` attribute.

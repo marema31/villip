@@ -1,0 +1,109 @@
+- request:
+    path: /urgent/201
+    method: GET
+  response:
+    status: 201
+    headers:
+      Content-Type: text/html
+    body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /urgent/202
+    method: GET
+  response:
+    status: 202
+    headers:
+      Content-Type: text/html
+    body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /urgent/plain
+    method: GET
+  response:
+    status: 200
+    headers:
+      Content-Type: text/plain
+    body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /urgent/csv
+    method: GET
+  response:
+    status: 200
+    headers:
+      Content-Type: text/csv
+    body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /urgent/203
+    method: GET
+  response:
+    status: 203
+    headers:
+      Content-Type: text/html
+    body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path:
+      matcher: ShouldMatch
+      value: /urgent/get/.*
+    method: GET
+  response:
+    status: 200
+  dynamic_response:
+    engine: go_template
+    script: >
+      headers:
+        Content-Type: [text/html]
+        X-Received: {{ index .Request.Headers "X-Tbm"}}
+        X-Received-2: {{ index .Request.Headers "X-Added"}}
+      body: >
+        site:urgent
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path:
+      matcher: ShouldMatch
+      value: /urgent/post/.*
+    method: POST
+  response:
+    status: 200
+  dynamic_response:
+    engine: go_template
+    script: >
+      headers:
+        Content-Type: [text/html]
+        X-Received: {{ index .Request.Headers "X-Tbm"}}
+        X-Received-2: {{ index .Request.Headers "X-Added"}}
+        X-Tbm: The message is here
+      body: >
+        site:urgent
+        {{.Request.Body}}
+
+        @@@
+        take your book,
+        play videogames,
+        try to dance,
+        sing often

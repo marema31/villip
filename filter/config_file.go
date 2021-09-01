@@ -5,13 +5,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 // NewFromYAML instantiate a Filter object from the configuration file.
-func NewFromYAML(upLog logrus.FieldLogger, filePath string) (string, uint8, *Filter) {
-	log := upLog.WithField("file", filepath.Base(filePath))
+func (f *Factory) NewFromYAML(filePath string) (string, uint8, FilteredServer) {
+	log := f.log.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -25,12 +24,12 @@ func NewFromYAML(upLog logrus.FieldLogger, filePath string) (string, uint8, *Fil
 		log.Fatalf("Cannot decode YAML: %v", err)
 	}
 
-	return _newFromConfig(upLog, c)
+	return f.newFromConfig(log, c)
 }
 
 // NewFromJSON instantiate a Filter object from the configuration file.
-func NewFromJSON(upLog logrus.FieldLogger, filePath string) (string, uint8, *Filter) {
-	log := upLog.WithField("file", filepath.Base(filePath))
+func (f *Factory) NewFromJSON(filePath string) (string, uint8, FilteredServer) {
+	log := f.log.WithField("file", filepath.Base(filePath))
 
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -44,5 +43,5 @@ func NewFromJSON(upLog logrus.FieldLogger, filePath string) (string, uint8, *Fil
 		log.Fatalf("Cannot decode JSON: %v", err)
 	}
 
-	return _newFromConfig(upLog, c)
+	return f.newFromConfig(log, c)
 }

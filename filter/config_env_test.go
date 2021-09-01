@@ -84,6 +84,15 @@ func TestNewFromEnv(t *testing.T) {
 			filter.Config{},
 		},
 		{
+			"missing prefix to",
+			args{map[string]string{
+				"VILLIP_URL":         "http://localhost:8081",
+				"VILLIP_PREFIX_FROM": "boat",
+			}},
+			true,
+			filter.Config{},
+		},
+		{
 			"minimal",
 			args{map[string]string{
 				"VILLIP_URL": "http://localhost:8081",
@@ -97,6 +106,7 @@ func TestNewFromEnv(t *testing.T) {
 				Force:    false,
 				Insecure: false,
 				Port:     8080,
+				Prefix:   []filter.Creplacement{},
 				Priority: 0,
 				Replace:  []filter.Creplacement{},
 				Request: filter.Caction{
@@ -116,21 +126,24 @@ func TestNewFromEnv(t *testing.T) {
 		{
 			"maximal",
 			args{map[string]string{
-				"VILLIP_URL":        "http://localhost:1234/url1",
-				"VILLIP_PORT":       "8081",
-				"VILLIP_PRIORITY":   "100",
-				"VILLIP_FORCE":      "1",
-				"VILLIP_INSECURE":   "1",
-				"VILLIP_DUMPFOLDER": "/var/log/villip/dump",
-				"VILLIP_DUMPURLS":   "/books/,/movies/",
-				"VILLIP_FROM":       "book",
-				"VILLIP_TO":         "smartphone",
-				"VILLIP_FOR":        "/youngsters/",
-				"VILLIP_FROM_1":     "dance",
-				"VILLIP_TO_1":       "chat",
-				"VILLIP_FOR_1":      "/youngsters/,/geeks/",
-				"VILLIP_TYPES":      "text/html,application/json",
-				"VILLIP_RESTRICTED": "192.168.1.0/24,192.168.8.0/24",
+				"VILLIP_URL":         "http://localhost:1234/url1",
+				"VILLIP_PORT":        "8081",
+				"VILLIP_PRIORITY":    "100",
+				"VILLIP_FORCE":       "1",
+				"VILLIP_INSECURE":    "1",
+				"VILLIP_DUMPFOLDER":  "/var/log/villip/dump",
+				"VILLIP_DUMPURLS":    "/books/,/movies/",
+				"VILLIP_FROM":        "book",
+				"VILLIP_TO":          "smartphone",
+				"VILLIP_FOR":         "/youngsters/",
+				"VILLIP_FROM_1":      "dance",
+				"VILLIP_TO_1":        "chat",
+				"VILLIP_FOR_1":       "/youngsters/,/geeks/",
+				"VILLIP_TYPES":       "text/html,application/json",
+				"VILLIP_RESTRICTED":  "192.168.1.0/24,192.168.8.0/24",
+				"VILLIP_PREFIX_FROM": "/env/",
+				"VILLIP_PREFIX_TO":   "/",
+				"VILLIP_STATUS":      "202,203",
 			}},
 			false,
 			filter.Config{
@@ -142,7 +155,15 @@ func TestNewFromEnv(t *testing.T) {
 				Force:    true,
 				Insecure: true,
 				Port:     8081,
+				Prefix: []filter.Creplacement{
+					{
+						From: "/env/",
+						To:   "/",
+						Urls: []string{},
+					},
+				},
 				Priority: 100,
+				Status:   []string{"202", "203"},
 				Replace:  []filter.Creplacement{},
 				Response: filter.Caction{
 					Replace: []filter.Creplacement{
@@ -172,25 +193,27 @@ func TestNewFromEnv(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock newFromConfig
-			var got filter.Config
-			filter.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, *filter.Filter) {
-				got = c
-				return "", 0, &filter.Filter{}
-			})
-
-			// Mock os.LookupEnv
-			filter.MockLookupEnv(func(key string) (string, bool) {
-				value, ok := tt.args.env[key]
-				return value, ok
-			})
 			// Use logrus abilities to test log.Fatal
 			log, hook := logrustest.NewNullLogger()
 			log.ExitFunc = func(int) { return }
 			defer func() { log.ExitFunc = nil }()
 			log.SetLevel(logrus.DebugLevel)
 
-			filter.NewFromEnv(log)
+			factory := filter.NewFactory(log).(*filter.Factory)
+			// Mock newFromConfig
+			var got filter.Config
+			factory.MockNewFromConfig(func(log logrus.FieldLogger, c filter.Config) (string, uint8, filter.FilteredServer) {
+				got = c
+				return "", 0, &filter.Filter{}
+			})
+
+			// Mock os.LookupEnv
+			factory.MockLookupEnv(func(key string) (string, bool) {
+				value, ok := tt.args.env[key]
+				return value, ok
+			})
+
+			factory.NewFromEnv()
 
 			fatal := filter.HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {

@@ -42,7 +42,8 @@ func (f *Filter) isAccepted(parsedHeader http.Header) bool {
 	for key, conditions := range f.token {
 		values := parsedHeader[key]
 		if len(values) == 0 {
-			f.log.WithFields(logrus.Fields{"header": key}).Debug("missing header for this filter")
+			f.log.WithField("header", key).Debug("missing header for this filter")
+			f.log.WithField("header", key).Debug("Refused")
 
 			return false
 		}
