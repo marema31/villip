@@ -118,6 +118,10 @@ lint: | $(GOLINT) ; $(info $(M) running golint…) @ ## Run golint
 fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files
 	$Q $(GOFMT) -s -w $(GO_FILES)
 
+.PHONY: e2e_tests
+e2e_tests:
+	$(MAKE) -C e2e_tests all
+
 # Misc
 
 .PHONY: clean
