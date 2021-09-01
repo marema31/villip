@@ -235,6 +235,7 @@ func TestFilter_isAccepted(t *testing.T) {
 			false,
 			[]string{
 				"missing header for this filter",
+				"Refused",
 			},
 		},
 		{
@@ -295,6 +296,50 @@ func TestFilter_isAccepted(t *testing.T) {
 			false,
 			[]string{
 				"lookup for condition",
+				"Refused",
+			},
+		},
+		{
+			"accepted notEmpty",
+			fields{
+				map[string][]headerConditions{
+					"X-ENV": {
+						{
+							value:  "",
+							action: notEmpty,
+						},
+					},
+				},
+			},
+			args{
+				http.Header{
+					"X-ENV": []string{"test"},
+				},
+			},
+			true,
+			[]string{
+				"lookup for condition",
+				"Accepted",
+			},
+		},
+		{
+			"rejected notEmpty",
+			fields{
+				map[string][]headerConditions{
+					"X-Authors": {
+						{
+							value:  "",
+							action: notEmpty,
+						},
+					},
+				},
+			},
+			args{
+				http.Header{},
+			},
+			false,
+			[]string{
+				"missing header for this filter",
 				"Refused",
 			},
 		},

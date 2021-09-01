@@ -150,7 +150,7 @@ func Test_newFromConfig(t *testing.T) {
 		{
 			"default",
 			args{Config{
-				URL: "http://localhost:8081",
+				URL: "http://localhost:8081/",
 			}},
 			false,
 			"8080",
@@ -178,7 +178,7 @@ func Test_newFromConfig(t *testing.T) {
 			},
 		},
 		{
-			"insecureContentTypePortPriority",
+			"insecureContentTypePortPriorityRestricted",
 			args{Config{
 				URL:          "http://localhost:8081",
 				Port:         9090,
@@ -186,6 +186,7 @@ func Test_newFromConfig(t *testing.T) {
 				ContentTypes: []string{"text/xml", "appplication/xsl"},
 				Insecure:     true,
 				Type:         "HTTP",
+				Restricted:   []string{"1.1.1.1/32", "192.168.1.0/24"},
 			}},
 			false,
 			"9090",
@@ -735,6 +736,13 @@ func Test_newFromConfig(t *testing.T) {
 			// This field is not interesting for our tests and make DeepEqual impossible
 			g2 := got2.(*Filter)
 			g2.log = nil
+
+			if len(g2.restricted) != len(tt.args.c.Restricted) {
+				t.Errorf("restricted does not have the correct number of element got %d, want %d", len(g2.restricted), len(tt.args.c.Restricted))
+			}
+
+			//We must remove it for DeepEqual
+			g2.restricted = []*net.IPNet{}
 
 			if !reflect.DeepEqual(g2, tt.want2) {
 				switch {

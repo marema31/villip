@@ -346,6 +346,7 @@ func TestList_readConfigFiles(t *testing.T) {
 func TestList_ReadConfig(t *testing.T) {
 	type fields struct {
 		filters map[string]map[uint8][]filter.FilteredServer
+		factory filter.Creator
 	}
 	type args struct {
 		env map[string]string
@@ -356,6 +357,15 @@ func TestList_ReadConfig(t *testing.T) {
 		args   args
 		want   map[string]map[uint8]int
 	}{
+		{
+			"No initial factory",
+			fields{
+				map[string]map[uint8][]filter.FilteredServer{},
+				nil,
+			},
+			args{map[string]string{}},
+			map[string]map[uint8]int{},
+		},
 		{
 			"normal",
 			fields{
@@ -371,6 +381,7 @@ func TestList_ReadConfig(t *testing.T) {
 						},
 					},
 				},
+				&MockCreator{},
 			},
 			args{map[string]string{
 				"VILLIP_URL":    "http://localhost:8081",
@@ -404,8 +415,12 @@ func TestList_ReadConfig(t *testing.T) {
 				return value, ok
 			}
 
-			fl.factory = &MockCreator{}
+			fl.factory = tt.fields.factory
 			fl.ReadConfig(logrus.New())
+
+			if fl.factory == nil {
+				t.Error("no factory was initialized")
+			}
 
 			checkListFilters(t, fl.filters, tt.want)
 		})

@@ -128,7 +128,7 @@ func (f *Filter) readAndReplaceBody(
 	return contentLength, body, originalBody, modifiedBody, nil
 }
 
-// PrefixReplace rewrite the current URL with the defined URL prefixes
+// PrefixReplace rewrite the current URL with the defined URL prefixes.
 func (f *Filter) PrefixReplace(URL string) string {
 	newURL := _do(URL, URL, f.prefix, true)
 	f.log.Debugf("Rewriting URL %s => %s", URL, newURL)

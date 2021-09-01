@@ -84,6 +84,15 @@ func TestNewFromEnv(t *testing.T) {
 			filter.Config{},
 		},
 		{
+			"missing prefix to",
+			args{map[string]string{
+				"VILLIP_URL":         "http://localhost:8081",
+				"VILLIP_PREFIX_FROM": "boat",
+			}},
+			true,
+			filter.Config{},
+		},
+		{
 			"minimal",
 			args{map[string]string{
 				"VILLIP_URL": "http://localhost:8081",
@@ -134,6 +143,7 @@ func TestNewFromEnv(t *testing.T) {
 				"VILLIP_RESTRICTED":  "192.168.1.0/24,192.168.8.0/24",
 				"VILLIP_PREFIX_FROM": "/env/",
 				"VILLIP_PREFIX_TO":   "/",
+				"VILLIP_STATUS":      "202,203",
 			}},
 			false,
 			filter.Config{
@@ -153,6 +163,7 @@ func TestNewFromEnv(t *testing.T) {
 					},
 				},
 				Priority: 100,
+				Status:   []string{"202", "203"},
 				Replace:  []filter.Creplacement{},
 				Response: filter.Caction{
 					Replace: []filter.Creplacement{
