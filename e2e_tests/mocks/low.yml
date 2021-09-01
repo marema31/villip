@@ -1,8 +1,8 @@
 - request:
-    path: /low/301
+    path: /low/201
     method: GET
   response:
-    status: 301
+    status: 201
     headers:
       Content-Type: text/html
     body: >
@@ -12,10 +12,49 @@
         try to dance,
         sing often
 - request:
-    path: /low/302
+    path: /low/202
     method: GET
   response:
-    status: 302
+    status: 202
+    headers:
+      Content-Type: text/html
+    body: >
+        site:low
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /low/plain
+    method: GET
+  response:
+    status: 200
+    headers:
+      Content-Type: text/plain
+    body: >
+        site:low
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /low/csv
+    method: GET
+  response:
+    status: 200
+    headers:
+      Content-Type: text/csv
+    body: >
+        site:low
+        take your book,
+        play videogames,
+        try to dance,
+        sing often
+- request:
+    path: /low/203
+    method: GET
+  response:
+    status: 203
     headers:
       Content-Type: text/html
     body: >
@@ -27,7 +66,7 @@
 - request:
     path:
       matcher: ShouldMatch
-      value: /low/request/.*
+      value: /low/get/.*
     method: GET
   response:
     status: 200
@@ -36,7 +75,8 @@
     script: >
       headers:
         Content-Type: [text/html]
-        X-Received: {{ index .Request.Headers "X-TBM"}}
+        X-Received: {{ index .Request.Headers "X-Tbm"}}
+        X-Received-2: {{ index .Request.Headers "X-Added"}}
       body: >
         site:low
         take your book,
@@ -46,8 +86,8 @@
 - request:
     path:
       matcher: ShouldMatch
-      value: /low/response/.*
-    method: GET
+      value: /low/post/.*
+    method: POST
   response:
     status: 200
   dynamic_response:
@@ -55,8 +95,9 @@
     script: >
       headers:
         Content-Type: [text/html]
-        X-Received: {{ index .Request.Headers "X-TBM"}}
-        X-TBM: The message is here
+        X-Received: {{ index .Request.Headers "X-Tbm"}}
+        X-Received-2: {{ index .Request.Headers "X-Added"}}
+        X-Tbm: The message is here
       body: >
         site:low
         {{.Request.Body}}

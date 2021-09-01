@@ -11,13 +11,13 @@ services:
       VILLIP_DEBUG: 1
       VILLIP_FROM: book
       VILLIP_TO: smartphone
-      VILLIP_FOR: /youngster,/children
-      VILLIP_FROM_1: videogame
-      VILLIP_TO_1: boardgame
-      VILLIP_FOR_1: /boomer,/grandparent
-      VILLIP_FROM_2: sing
-      VILLIP_TO_2: chat
-      VILLIP_FOR_2: /youngster,/children
+      VILLIP_FOR: /get/youngster,/get/children,/post/youngster,/post/children
+      VILLIP_FROM_1: sing
+      VILLIP_TO_1: chat
+      VILLIP_FOR_1: /get/youngster,/get/children,/post/youngster,/post/children
+      VILLIP_FROM_2: videogame
+      VILLIP_TO_2: boardgame
+      VILLIP_FOR_2: /get/boomer,/get/grandparent,/post/boomer,/post/grandparent
       VILLIP_TYPES: text/html,text/plain
       VILLIP_FROM_3: take
       VILLIP_TO_3: Bring
@@ -34,6 +34,7 @@ services:
       VENOM_VAR_VILLIP_SERVER: "villip"
       VENOM_VAR_VILLIP_PORT1: "8080"
       VENOM_VAR_VILLIP_PORT2: "8081"
+      VENOM_VAR_VILLIP_PORT3: "8082"
     volumes:
       - "./tests:/testsuite"
       - "./outputs:/outputs"
@@ -46,8 +47,8 @@ services:
       - "./mocks:/mocks"
     networks:
       - villip_test
-    # ports:
-    #   - 8081:8081
+    ports:
+      - 18081:8081
 
 networks:
   villip_test:

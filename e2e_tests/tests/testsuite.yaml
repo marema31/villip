@@ -18,7 +18,7 @@ testcases:
     steps:
       - type: http
         method: GET
-        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/priority"
         headers:
           X-Level: urgent
           X-Type: vip
@@ -27,7 +27,7 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
       - type: http
         method: GET
-        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/priority"
         headers:
           X-Level: urgent
         assertions:
@@ -35,7 +35,7 @@ testcases:
           - result.body ShouldContainSubstring "site:normal"
       - type: http
         method: GET
-        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/priority"
         headers:
           X-Level: normal
         assertions:
@@ -43,7 +43,7 @@ testcases:
           - result.body ShouldContainSubstring "site:normal"
       - type: http
         method: GET
-        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/priority"
         headers:
           X-Level: low
         assertions:
@@ -51,8 +51,315 @@ testcases:
           - result.body ShouldContainSubstring "site:low"
       - type: http
         method: GET
-        url: "http://{{.villip_server}}:{{.villip_port1}}/request/priority"
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/priority"
         headers:
         assertions:
           - result.statuscode ShouldEqual 200
           - result.body ShouldContainSubstring "site:env"
+  - name : replace response
+    steps:
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/youngster"
+        headers:
+          X-Level: urgent
+          X-Type: vip
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/youngster"
+        headers:
+          X-Level: normal
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/youngster"
+        headers:
+          X-Level: low
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:low"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port1}}/get/youngster"
+        headers:
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:env"
+          - result.body ShouldContainSubstring "Bring your smartphone, play videogames, try to dance, chat often"
+  - name : replace request and response
+    steps:
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: urgent
+          X-Type: vip
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: normal
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: low
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:low"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:env"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
+          - result.body ShouldContainSubstring "Bring your smartphone, play videogames, try to dance, chat often"
+  - name : replace request and response headers no header sent
+    steps:
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: urgent
+          X-Type: vip
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+          - result.headers.x-tbm ShouldContainSubstring "The message is here" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: normal
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "The message is here"
+          - result.headers.x-added ShouldContainSubstring ""
+          - result.headers.x-received ShouldContainSubstring "no message"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: low
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:low"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message"
+          - result.headers.x-added ShouldContainSubstring ""
+          - result.headers.x-received ShouldContainSubstring "no message"
+  - name : replace request and response headers header sent
+    steps:
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: urgent
+          X-Type: vip
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+          - result.headers.x-tbm ShouldContainSubstring "The message is here" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: normal
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:normal"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "The message is here"
+          - result.headers.x-added ShouldContainSubstring ""
+          - result.headers.x-received ShouldContainSubstring "here a message"
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
+        headers:
+          X-Level: low
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:low"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message"
+          - result.headers.x-added ShouldContainSubstring ""
+          - result.headers.x-received ShouldContainSubstring "no message"
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+  - name : Only if URL correspond
+    steps:
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port2}}/dev/urgent/post/youngster"
+        headers:
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,Go to concert"
+          - result.body ShouldContainSubstring "Get your book, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port2}}/dev/urgent/post/youngster/connected"
+        headers:
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+  - name : Without prefix
+    steps:
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/post/youngster"
+        headers:
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch films,Go to concert"
+          - result.body ShouldContainSubstring "Get your book, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+      - type: http
+        method: POST
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/post/youngster/connected"
+        headers:
+          X-Tbm: here a message
+          X-Added: and a second message
+          Content-Type: text/html
+        body: >
+          enjoy your life,watch films,go to arcade
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "site:urgent"
+          - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
+          - result.headers.x-added ShouldContainSubstring "Always here"
+          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+  - name : Status
+    steps:
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/201"
+        assertions:
+          - result.statuscode ShouldEqual 201
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/202"
+        assertions:
+          - result.statuscode ShouldEqual 202
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+  - name : Content type
+    steps:
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/plain"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
+      - type: http
+        method: GET
+        url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/csv"
+        assertions:
+          - result.statuscode ShouldEqual 200
+          - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
