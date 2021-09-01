@@ -52,6 +52,7 @@ type Filter struct {
 	response     response
 	request      request
 	contentTypes []string
+	status       []int
 	restricted   []*net.IPNet
 	token        map[string][]headerConditions
 	url          string

@@ -542,6 +542,7 @@ func TestFilter_toFilter(t *testing.T) {
 
 			f := &Filter{
 				contentTypes: []string{"text/html", "application/json"},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			}
 
 			if got := f.toFilter(log, &r); got != tt.want {

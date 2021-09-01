@@ -2,6 +2,7 @@ package filter
 
 import (
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -173,6 +174,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -207,6 +209,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "9090",
 				priority:     "100",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -254,6 +257,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -304,6 +308,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -353,6 +358,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -420,6 +426,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -548,6 +555,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -628,6 +636,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:         "8080",
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
+				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 		{
@@ -691,6 +700,7 @@ func Test_newFromConfig(t *testing.T) {
 				port:     "8080",
 				priority: "0",
 				dumpURLs: []*regexp.Regexp{},
+				status:   []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
 			},
 		},
 	}
@@ -748,7 +758,8 @@ func Test_newFromConfig(t *testing.T) {
 
 func Test_parseReplaceConfig(t *testing.T) {
 	type args struct {
-		rep []Creplacement
+		rep    []Creplacement
+		prefix []replaceParameters
 	}
 	tests := []struct {
 		name        string
@@ -758,13 +769,16 @@ func Test_parseReplaceConfig(t *testing.T) {
 	}{
 		{
 			"simple",
-			args{[]Creplacement{
-				{
-					From: "from",
-					To:   "to",
-					Urls: []string{"/"},
+			args{
+				[]Creplacement{
+					{
+						From: "from",
+						To:   "to",
+						Urls: []string{"/"},
+					},
 				},
-			}},
+				[]replaceParameters{},
+			},
 			false,
 			[]replaceParameters{
 				{
@@ -776,18 +790,21 @@ func Test_parseReplaceConfig(t *testing.T) {
 		},
 		{
 			"multiple",
-			args{[]Creplacement{
-				{
-					From: "from",
-					To:   "to",
-					Urls: []string{"/test1/mul", "/test2"},
+			args{
+				[]Creplacement{
+					{
+						From: "from",
+						To:   "to",
+						Urls: []string{"/test1/mul", "/test2"},
+					},
+					{
+						From: "to",
+						To:   "from",
+						Urls: []string{"/test3/mul", "/test4"},
+					},
 				},
-				{
-					From: "to",
-					To:   "from",
-					Urls: []string{"/test3/mul", "/test4"},
-				},
-			}},
+				[]replaceParameters{},
+			},
 			false,
 			[]replaceParameters{
 				{
@@ -810,19 +827,80 @@ func Test_parseReplaceConfig(t *testing.T) {
 		},
 		{
 			"error",
-			args{[]Creplacement{
-				{
-					From: "from",
-					To:   "to",
-					Urls: []string{"/("},
+			args{
+				[]Creplacement{
+					{
+						From: "from",
+						To:   "to",
+						Urls: []string{"/("},
+					},
 				},
-			}},
+				[]replaceParameters{},
+			},
 			true,
 			[]replaceParameters{
 				{
 					from: "from",
 					to:   "to",
 					urls: []*regexp.Regexp{regexp.MustCompile("/")},
+				},
+			},
+		},
+		{
+			"prefixed",
+			args{
+				[]Creplacement{
+					{
+						From: "from",
+						To:   "to",
+						Urls: []string{"/test1/mul", "/test2/test2/mul"},
+					},
+					{
+						From: "to",
+						To:   "from",
+						Urls: []string{"/test3/mul", "/test4/test3"},
+					},
+				},
+				[]replaceParameters{{
+					from: "/test3",
+					to:   "",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^/test3"),
+					},
+				},
+					{
+						from: "/test4",
+						to:   "/test6",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/test4"),
+						},
+					},
+					{
+						from: "/test2",
+						to:   "/dev/test2",
+						urls: []*regexp.Regexp{
+							regexp.MustCompile("^/test2"),
+						},
+					},
+				},
+			},
+			false,
+			[]replaceParameters{
+				{
+					from: "from",
+					to:   "to",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^/test1/mul"),
+						regexp.MustCompile("^/dev/test2/test2/mul"),
+					},
+				},
+				{
+					from: "to",
+					to:   "from",
+					urls: []*regexp.Regexp{
+						regexp.MustCompile("^/mul"),
+						regexp.MustCompile("^/test6/test3"),
+					},
 				},
 			},
 		},
@@ -835,7 +913,7 @@ func Test_parseReplaceConfig(t *testing.T) {
 			defer func() { log.ExitFunc = nil }()
 			log.SetLevel(logrus.DebugLevel)
 
-			got := parseReplaceConfig(log, tt.args.rep)
+			got := parseReplaceConfig(log, tt.args.rep, tt.args.prefix)
 
 			fatal := HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {
@@ -848,6 +926,12 @@ func Test_parseReplaceConfig(t *testing.T) {
 
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseReplaceConfig() = %v, want %v", got, tt.want)
+				for i := range got {
+					if !reflect.DeepEqual(got[i], tt.want[i]) {
+						t.Errorf("parseReplaceConfig(i) = %v, want %v", got[i].urls, tt.want[i].urls)
+
+					}
+				}
 			}
 		})
 	}
@@ -944,6 +1028,88 @@ func Test_parseTokenConfig(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
 				t.Errorf("parseTokenConfig() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestFilter_convertStatus(t *testing.T) {
+
+	type args struct {
+		statusList []string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		want        []int
+		expectFatal bool
+	}{
+		{
+			"default",
+			args{
+				[]string{},
+			},
+			[]int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+			false,
+		},
+		{
+			"correct",
+			args{
+				[]string{"404", "666"},
+			},
+			[]int{200, 302, 301, 404, 666},
+			false,
+		},
+		{
+			"negative status",
+			args{
+				[]string{"404", "-1", "666"},
+			},
+			[]int{},
+			true,
+		},
+		{
+			"wrong status",
+			args{
+				[]string{"404", "1234", "666"},
+			},
+			[]int{},
+			true,
+		},
+		{
+			"not convertible status",
+			args{
+				[]string{"404", "found", "666"},
+			},
+			[]int{},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Use logrus abilities to test log.Fatal
+			log, hook := logrustest.NewNullLogger()
+			log.ExitFunc = func(int) { return }
+			defer func() { log.ExitFunc = nil }()
+			log.SetLevel(logrus.DebugLevel)
+			f := &Filter{
+				log: log,
+			}
+
+			got := f.convertStatus(tt.args.statusList)
+
+			fatal := HadErrorLevel(hook, logrus.FatalLevel)
+			if fatal != tt.expectFatal {
+				t.Errorf("convertStatus() fatal got = %v, want %v", fatal, tt.expectFatal)
+			}
+
+			if fatal {
+				return
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Filter.convertStatus() = %v, want %v", got, tt.want)
 			}
 		})
 	}

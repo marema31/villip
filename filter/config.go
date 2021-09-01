@@ -3,8 +3,10 @@ package filter
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -73,6 +75,10 @@ func genNewFromConfig() fNewConfig {
 		}
 
 		f.url = c.URL
+		if strings.HasSuffix(f.url, "/") {
+			f.url = c.URL[:len(c.URL)-1]
+		}
+
 		f.priority = fmt.Sprintf("%d", c.Priority)
 
 		if c.Port == 0 {
@@ -122,7 +128,8 @@ func genNewFromConfig() fNewConfig {
 		f.force = c.Force
 		f.insecure = c.Insecure
 
-		f.prefix = make([]replaceParameters, 0) //Must be before request and response
+		f.prefix = make([]replaceParameters, 0) // Must be before request and response
+
 		if len(c.Prefix) > 0 {
 			f.prefix = parseReplaceConfig(f.log, c.Prefix, []replaceParameters{})
 		}
@@ -182,6 +189,8 @@ func genNewFromConfig() fNewConfig {
 			f.restricted = append(f.restricted, ipnet)
 		}
 
+		f.status = f.convertStatus(c.Status)
+
 		f.contentTypes = append(f.contentTypes, c.ContentTypes...)
 
 		if len(f.contentTypes) == 0 {
@@ -192,4 +201,21 @@ func genNewFromConfig() fNewConfig {
 
 		return f.port, c.Priority, &f
 	}
+}
+
+func (f *Filter) convertStatus(statusList []string) []int {
+	defaultStatus := []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently}
+	converted := make([]int, 0, len(statusList)+len(defaultStatus))
+	converted = append(converted, defaultStatus...)
+
+	for _, sStatus := range statusList {
+		s, err := strconv.Atoi(sStatus)
+		if err != nil || s > 1000 || s < 1 {
+			f.log.Fatalf("%s is not a valid status code", sStatus)
+		}
+
+		converted = append(converted, s)
+	}
+
+	return converted
 }

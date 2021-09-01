@@ -108,6 +108,10 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 		i++
 	}
 
+	if status, ok := f.lookupEnv("VILLIP_STATUS"); ok {
+		c.Status = strings.Split(strings.Replace(status, " ", "", -1), ",")
+	}
+
 	if contenttypes, ok := f.lookupEnv("VILLIP_TYPES"); ok {
 		c.ContentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
 	}

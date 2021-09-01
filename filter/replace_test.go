@@ -163,13 +163,45 @@ func Test_do(t *testing.T) {
 			"take your smartphone,\ntry to dance\n sing often",
 		},
 		{
-			"prefix replaced",
+			"prefix replaced longer",
 			args{
 				"/youngster/admin",
 				"/youngster/admin",
 				[]replaceParameters{
 					{
 						from: "/youngster/",
+						to:   "/child/",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				true,
+			},
+			"/child/admin",
+		},
+		{
+			"prefix replaced shorter",
+			args{
+				"/child/admin",
+				"/child/admin",
+				[]replaceParameters{
+					{
+						from: "/child/",
+						to:   "/youngster/",
+						urls: []*regexp.Regexp{},
+					},
+				},
+				true,
+			},
+			"/youngster/admin",
+		},
+		{
+			"prefix replaced equal",
+			args{
+				"/young/admin",
+				"/young/admin",
+				[]replaceParameters{
+					{
+						from: "/young/",
 						to:   "/child/",
 						urls: []*regexp.Regexp{},
 					},
@@ -536,6 +568,7 @@ func TestFilter_PrefixReplace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &Filter{
 				prefix: tt.fields.prefix,
+				log:    logrus.New(),
 			}
 			if got := f.PrefixReplace(tt.args.URL); got != tt.want {
 				t.Errorf("Filter.PrefixReplace() = %v, want %v", got, tt.want)

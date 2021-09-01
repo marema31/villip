@@ -34,7 +34,7 @@ func do(url string, s string, rep []replaceParameters, prefix bool) string {
 		}
 
 		if prefix {
-			if len(s) > len(r.from) {
+			if strings.HasPrefix(s, r.from) {
 				s = r.to + s[len(r.from):]
 			}
 		} else {
@@ -103,7 +103,7 @@ func (f *Filter) readAndReplaceBody(
 
 	originalBody = string(b)
 
-	f.log.Debug(fmt.Sprintf("Body before the replacement : %s", originalBody))
+	f.log.WithField("requestURL", requestURL).Debug(fmt.Sprintf("Body before the replacement : %s", originalBody))
 
 	modifiedBody = _do(requestURL, originalBody, rep, false)
 
@@ -129,5 +129,8 @@ func (f *Filter) readAndReplaceBody(
 }
 
 func (f *Filter) PrefixReplace(URL string) string {
-	return _do(URL, URL, f.prefix, true)
+	newURL := _do(URL, URL, f.prefix, true)
+	f.log.Debugf("Rewriting URL %s => %s", URL, newURL)
+
+	return newURL
 }

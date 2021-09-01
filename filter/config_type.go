@@ -47,6 +47,7 @@ type Config struct {
 	Request      Caction        `yaml:"request" json:"request"`
 	Response     Caction        `yaml:"response" json:"response"`
 	Restricted   []string       `yaml:"restricted" json:"restricted"`
+	Status       []string       `yaml:"status" json:"status"`
 	Token        []CtokenAction `yaml:"token" json:"token"`
 	Type         string         `yaml:"type" json:"type"`
 	URL          string         `yaml:"url" json:"url"`

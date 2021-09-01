@@ -86,14 +86,17 @@ func (f *Filter) toFilter(log logrus.FieldLogger, r *http.Response) bool {
 		log.WithFields(logrus.Fields{"type": currentType}).Debug("... skipping type")
 
 		return false
-	} else if r.StatusCode != http.StatusFound && r.StatusCode != http.StatusMovedPermanently {
-		// TODO: should be configurable
-		log.Debug("... skipping status")
-
-		return false
 	}
 
-	return true
+	for _, status := range f.status {
+		if r.StatusCode == status {
+			return true
+		}
+	}
+
+	log.Debug("... skipping status")
+
+	return false
 }
 
 func (f *Filter) compress(s string) (*bytes.Buffer, error) {
