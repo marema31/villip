@@ -6,6 +6,7 @@ start:
 	./start.sh
 
 run:
+	docker-compose start tcpclient
 	docker-compose start venom
 
 stop:

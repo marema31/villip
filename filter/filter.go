@@ -21,13 +21,11 @@ const (
 	notEmpty headerAction = iota
 )
 
-type filterType int
+type Type int
 
 const (
-	httpFilter filterType = iota
-
-//	tcpFilter
-//	udpFilter
+	HTTP Type = iota
+	TCP  Type = iota
 )
 
 type headerConditions struct {
@@ -62,5 +60,9 @@ type Filter struct {
 	log          logrus.FieldLogger // Interface for Logger and Entry
 	dumpFolder   string
 	dumpURLs     []*regexp.Regexp
-	kind         filterType
+	kind         Type
+}
+
+func (f *Filter) Kind() Type {
+	return f.kind
 }

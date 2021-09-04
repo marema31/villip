@@ -8,6 +8,8 @@ import (
 
 	"github.com/marema31/villip/filter"
 	"github.com/marema31/villip/server"
+	"github.com/marema31/villip/server/http"
+	"github.com/marema31/villip/server/tcp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,14 +63,25 @@ func sortFilter(filters map[uint8][]filter.FilteredServer) []filter.FilteredServ
 	return fl
 }
 
-func createServer(filters map[uint8][]filter.FilteredServer, port string, upLog logrus.FieldLogger) *server.Server {
-	var s *server.Server
+func createServer(filters map[uint8][]filter.FilteredServer, port string, upLog logrus.FieldLogger) server.Server {
+	var (
+		s server.Server
+	)
 
 	for _, f := range sortFilter(filters) {
 		if s != nil {
+			if f.Kind() != filter.HTTP {
+				upLog.Fatal("Cannot add a non HTTP filter to the same port than a HTTP proxy")
+			}
+
 			s.Insert(f)
 		} else {
-			s = server.New(upLog, port, f)
+			switch f.Kind() {
+			case filter.HTTP:
+				s = http.New(upLog, port, f)
+			case filter.TCP:
+				s = tcp.New(upLog, port, f)
+			}
 		}
 	}
 
@@ -76,8 +89,8 @@ func createServer(filters map[uint8][]filter.FilteredServer, port string, upLog 
 }
 
 // CreateServers creates all the server corresponding to the filters of the list.
-func (fl *List) CreateServers(upLog logrus.FieldLogger) map[string]*server.Server {
-	servers := make(map[string]*server.Server)
+func (fl *List) CreateServers(upLog logrus.FieldLogger) map[string]server.Server {
+	servers := make(map[string]server.Server)
 	for port := range fl.filters {
 		servers[port] = createServer(fl.filters[port], port, upLog)
 	}

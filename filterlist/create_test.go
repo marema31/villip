@@ -1,7 +1,6 @@
 package filterlist
 
 import (
-	"net"
 	"net/http"
 	"path"
 	"strconv"
@@ -12,27 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 )
-
-type mockFilter struct {
-	position    int
-	toInsert    bool
-	conditional bool
-}
-
-func (m *mockFilter) IsConcerned(ip net.IP, h http.Header) bool {
-	return m.toInsert
-}
-
-func (m *mockFilter) IsConditional() bool {
-	return m.conditional
-}
-
-func (m *mockFilter) Serve(res http.ResponseWriter, req *http.Request) {
-}
-
-func (m *mockFilter) PrefixReplace(URL string) string {
-	return URL
-}
 
 func TestList_insert(t *testing.T) {
 	type fields struct {
@@ -67,7 +45,7 @@ func TestList_insert(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8081": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -85,7 +63,7 @@ func TestList_insert(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -103,7 +81,7 @@ func TestList_insert(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -121,7 +99,7 @@ func TestList_insert(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -138,7 +116,7 @@ func TestList_insert(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fl := New()
 			fl.filters = tt.fields.filters
-			fl.insert(tt.args.port, tt.args.priority, &mockFilter{1, true, tt.args.conditional})
+			fl.insert(tt.args.port, tt.args.priority, filter.NewMock(filter.HTTP, 1, true, tt.args.conditional, "", http.Header{}, "", http.Header{}, t))
 
 			_, ok := fl.filters[tt.args.port]
 			if !ok {
@@ -177,12 +155,12 @@ func Test_sortFilter(t *testing.T) {
 			args{
 				map[uint8][]filter.FilteredServer{
 					1: {
-						&mockFilter{2, false, true},
-						&mockFilter{3, false, false},
+						filter.NewMock(filter.HTTP, 2, false, true, "", http.Header{}, "", http.Header{}, t),
+						filter.NewMock(filter.HTTP, 3, false, false, "", http.Header{}, "", http.Header{}, t),
 					},
 					10: {
-						&mockFilter{0, true, true},
-						&mockFilter{1, true, false},
+						filter.NewMock(filter.HTTP, 0, true, true, "", http.Header{}, "", http.Header{}, t),
+						filter.NewMock(filter.HTTP, 1, true, false, "", http.Header{}, "", http.Header{}, t),
 					},
 				},
 			},
@@ -193,14 +171,14 @@ func Test_sortFilter(t *testing.T) {
 			got := sortFilter(tt.args.filters)
 
 			for i, f := range got {
-				mf, ok := f.(*mockFilter)
+				mf, ok := f.(*filter.Mock)
 				if !ok {
 					t.Error("The list something else than a mock... weird")
 					return
 				}
 
-				if mf.position != i {
-					t.Errorf("element %d was not at the expected index but at %d", mf.position, i)
+				if mf.Position != i {
+					t.Errorf("element %d was not at the expected index but at %d", mf.Position, i)
 				}
 			}
 		})
@@ -223,13 +201,13 @@ func TestList_CreateServers(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
-							&mockFilter{1, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+							filter.NewMock(filter.HTTP, 1, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 					"8081": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -287,12 +265,12 @@ func TestList_readConfigFiles(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 					"8081": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},
@@ -372,12 +350,12 @@ func TestList_ReadConfig(t *testing.T) {
 				map[string]map[uint8][]filter.FilteredServer{
 					"8080": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 					"8081": {
 						10: []filter.FilteredServer{
-							&mockFilter{0, false, false},
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
 				},

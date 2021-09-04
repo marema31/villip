@@ -363,3 +363,9 @@ testcases:
         assertions:
           - result.statuscode ShouldEqual 200
           - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
+  - name: TCP proxy
+    steps:
+      - type: exec
+        script: cat /tcpoutput/result.txt
+        assertions:
+          - result.systemout ShouldContainSubstring "Test succeeded"
