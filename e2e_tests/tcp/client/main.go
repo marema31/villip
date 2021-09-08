@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// SendAndReceive sent the data to the server, waits for the mirror response an check it.
 func SendAndReceive(proto, addr string, out chan<- bool, sum [20]byte, data []byte) {
 	c, err := net.Dial(proto, addr)
 	if err != nil {

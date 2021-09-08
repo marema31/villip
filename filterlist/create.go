@@ -107,12 +107,12 @@ func (fl *List) readConfigFiles(upLog logrus.FieldLogger, folderPath string) {
 	for _, file := range files {
 		ext := filepath.Ext(file.Name())
 
-		switch {
-		case file.Mode().IsRegular() && (ext == ".yml" || ext == ".yaml"):
+		switch ext {
+		case ".yml", ".yaml":
 			port, priority, f := fl.factory.NewFromYAML(filepath.Join(folderPath, file.Name()))
 			fl.insert(port, priority, f)
 
-		case file.Mode().IsRegular() && (ext == ".json"):
+		case ".json":
 			port, priority, f := fl.factory.NewFromJSON(filepath.Join(folderPath, file.Name()))
 			fl.insert(port, priority, f)
 		default:

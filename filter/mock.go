@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// Mock provides a way to mimic a Filter object.
 type Mock struct {
 	Position    int
 	Concerned   bool
@@ -20,6 +21,7 @@ type Mock struct {
 	T           *testing.T
 }
 
+// NewMock returns a new mock.
 func NewMock(
 	kind Type,
 	position int,
@@ -44,20 +46,24 @@ func NewMock(
 	}
 }
 
+// IsConcerned mimics the IsConcerned from Filter.
 func (m *Mock) IsConcerned(ip net.IP, h http.Header) bool {
 	return m.Concerned
 }
 
+// IsConditional mimics the IsConditional from Filter.
 func (m *Mock) IsConditional() bool {
 	return m.Conditional
 }
 
+// Kind mimics the Kind from Filter.
 func (m *Mock) Kind() Type {
 	return m.kind
 }
 
+// Serve mimics the Serve from Filter.
 func (m *Mock) Serve(res http.ResponseWriter, req *http.Request) {
-	res.Write([]byte(m.resBody))
+	_, _ = res.Write([]byte(m.resBody))
 	h := res.Header()
 
 	for name, value := range m.resHeader {
@@ -75,10 +81,12 @@ func (m *Mock) Serve(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// PrefixReplace mimics the PrefixReplace from Filter.
 func (m *Mock) PrefixReplace(URL string) string {
 	return URL
 }
 
+// ServeTCP mimics the ServeTCP from Filter.
 func (m *Mock) ServeTCP() error {
 	return nil
 }

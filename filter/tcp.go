@@ -3,8 +3,11 @@ package filter
 import (
 	"io"
 	"net"
+
+	"github.com/sirupsen/logrus"
 )
 
+// ServeTCP listen on the given port and start a goroutine to handle each connection.
 func (f *Filter) ServeTCP() error {
 	localAddr := ":" + f.port
 	remoteAddr := f.url[len("tcp://"):]
@@ -40,15 +43,16 @@ func (f *Filter) ServeTCP() error {
 
 			closer := make(chan struct{}, 2) //nolint: gomnd
 
-			go copyTCP(closer, conn2, conn)
-			go copyTCP(closer, conn, conn2)
+			go copyTCP(closer, conn2, conn, log.WithField("type", "request"))
+			go copyTCP(closer, conn, conn2, log.WithField("type", "response"))
 			<-closer
 			log.Debug("Connection complete")
 		}()
 	}
 }
 
-func copyTCP(closer chan struct{}, dst io.Writer, src io.Reader) {
-	_, _ = io.Copy(dst, src)
+func copyTCP(closer chan struct{}, dst io.Writer, src io.Reader, log logrus.FieldLogger) {
+	n, _ := io.Copy(dst, src)
+	log.Debugf("transfered: %d bytes", n)
 	closer <- struct{}{} // connection is closed, send signal to stop proxy
 }

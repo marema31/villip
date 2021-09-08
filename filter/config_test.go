@@ -137,6 +137,16 @@ func Test_newFromConfig(t *testing.T) {
 			&Filter{},
 		},
 		{
+			"EmptyToken",
+			args{Config{
+				URL:   "http://localhost:8081",
+				Token: []CtokenAction{{Header: ""}}}},
+			true,
+			"8080",
+			0,
+			&Filter{},
+		},
+		{
 			"WrongRestricted",
 			args{Config{
 				URL:        "http://localhost:8080",
@@ -175,6 +185,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -211,6 +222,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "100",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -259,6 +271,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         TCP,
 			},
 		},
 		{
@@ -310,6 +323,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -360,6 +374,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -428,6 +443,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -557,6 +573,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -638,6 +655,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority:     "0",
 				dumpURLs:     []*regexp.Regexp{},
 				status:       []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:         HTTP,
 			},
 		},
 		{
@@ -702,6 +720,7 @@ func Test_newFromConfig(t *testing.T) {
 				priority: "0",
 				dumpURLs: []*regexp.Regexp{},
 				status:   []int{http.StatusOK, http.StatusFound, http.StatusMovedPermanently},
+				kind:     HTTP,
 			},
 		},
 	}

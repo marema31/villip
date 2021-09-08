@@ -21,11 +21,14 @@ const (
 	notEmpty headerAction = iota
 )
 
+// Type defines the kind of proxy.
 type Type int
 
 const (
+	// HTTP web connection with replacement.
 	HTTP Type = iota
-	TCP  Type = iota
+	// TCP raw connection without replacement.
+	TCP Type = iota
 )
 
 type headerConditions struct {
@@ -63,6 +66,7 @@ type Filter struct {
 	kind         Type
 }
 
+// Kind returns the type of proxy.
 func (f *Filter) Kind() Type {
 	return f.kind
 }

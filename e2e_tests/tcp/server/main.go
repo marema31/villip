@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// HandleConn read all the data from the connection and resend it back.
 func HandleConn(c net.Conn) {
 	defer c.Close()
 
@@ -68,7 +69,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		i += 1
+		i++
 		log.Println("received", i)
 
 		// handle connection

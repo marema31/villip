@@ -191,10 +191,27 @@ func TestList_CreateServers(t *testing.T) {
 		filters map[string]map[uint8][]filter.FilteredServer
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   []string
+		name        string
+		fields      fields
+		expectFatal bool
+		want        []string
 	}{
+		{
+			"mixed type",
+			fields{
+				map[string]map[uint8][]filter.FilteredServer{
+					"8080": {
+						10: []filter.FilteredServer{
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+							filter.NewMock(filter.HTTP, 1, false, false, "", http.Header{}, "", http.Header{}, t),
+							filter.NewMock(filter.TCP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+						},
+					},
+				},
+			},
+			true,
+			[]string{"8080", "8081", "8088"},
+		},
 		{
 			"normal",
 			fields{
@@ -210,18 +227,38 @@ func TestList_CreateServers(t *testing.T) {
 							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
 						},
 					},
+					"8088": {
+						10: []filter.FilteredServer{
+							filter.NewMock(filter.TCP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+						},
+					},
 				},
 			},
-			[]string{"8080", "8081"},
+			false,
+			[]string{"8080", "8081", "8088"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Use logrus abilities to test log.Fatal
+			log, hook := logrustest.NewNullLogger()
+			log.ExitFunc = func(int) { return }
+			defer func() { log.ExitFunc = nil }()
+			log.SetLevel(logrus.DebugLevel)
+
 			fl := New()
 			fl.filters = tt.fields.filters
 
-			got := fl.CreateServers(logrus.New())
+			got := fl.CreateServers(log)
 
+			fatal := HadErrorLevel(hook, logrus.FatalLevel)
+			if fatal != tt.expectFatal {
+				t.Errorf("fatal got = %v, want %v", fatal, tt.expectFatal)
+			}
+
+			if fatal {
+				return
+			}
 			if len(got) != len(tt.want) {
 				t.Errorf("wrong number of server wanted %d, got %d", len(tt.want), len(got))
 			}
