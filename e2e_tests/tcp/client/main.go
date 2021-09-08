@@ -76,7 +76,10 @@ func main() {
 	reader := bufio.NewReader(filedata)
 	buffer := bytes.NewBuffer(data)
 
-	io.Copy(buffer, reader)
+	_, err = io.Copy(buffer, reader)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	sum := sha1.Sum(data)
 
