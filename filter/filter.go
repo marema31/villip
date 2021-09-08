@@ -21,13 +21,14 @@ const (
 	notEmpty headerAction = iota
 )
 
-type filterType int
+// Type defines the kind of proxy.
+type Type int
 
 const (
-	httpFilter filterType = iota
-
-//	tcpFilter
-//	udpFilter
+	// HTTP web connection with replacement.
+	HTTP Type = iota
+	// TCP raw connection without replacement.
+	TCP Type = iota
 )
 
 type headerConditions struct {
@@ -62,5 +63,10 @@ type Filter struct {
 	log          logrus.FieldLogger // Interface for Logger and Entry
 	dumpFolder   string
 	dumpURLs     []*regexp.Regexp
-	kind         filterType
+	kind         Type
+}
+
+// Kind returns the type of proxy.
+func (f *Filter) Kind() Type {
+	return f.kind
 }

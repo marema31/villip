@@ -38,6 +38,7 @@ services:
     volumes:
       - "./tests:/testsuite"
       - "./outputs:/outputs"
+      - tcpoutput:/tcpoutput
     networks:
       - villip_test
   smocker:
@@ -45,10 +46,26 @@ services:
       context: smocker
     volumes:
       - "./mocks:/mocks"
+      - tcpoutput:/tcpoutput
     networks:
       - villip_test
-    ports:
-      - 18081:8081
+    # ports:
+    #   - 8081:8081
+  tcpserver:
+    build:
+      context: ./tcp/server
+    networks:
+      - villip_test
+  tcpclient:
+    build:
+      context: ./tcp/client
+    networks:
+      - villip_test
+    volumes:
+      - tcpoutput:/tcpoutput
 
 networks:
   villip_test:
+
+volumes:
+  tcpoutput:

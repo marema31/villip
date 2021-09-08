@@ -9,6 +9,8 @@ import (
 type FilteredServer interface {
 	IsConcerned(net.IP, http.Header) bool
 	Serve(http.ResponseWriter, *http.Request)
+	ServeTCP() error
 	IsConditional() bool
 	PrefixReplace(string) string
+	Kind() Type
 }

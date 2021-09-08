@@ -1,60 +1,22 @@
-package server_test
+package http_test
 
 import (
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/marema31/villip/server"
+	"github.com/marema31/villip/filter"
+	server "github.com/marema31/villip/server/http"
 	logrustest "github.com/sirupsen/logrus/hooks/test"
 )
 
-type mockFilter struct {
-	concerned bool
-	reqBody   string
-	reqHeader http.Header
-	resBody   string
-	resHeader http.Header
-	t         *testing.T
-}
-
-func (m *mockFilter) IsConcerned(ip net.IP, h http.Header) bool {
-	return m.concerned
-}
-
-func (m *mockFilter) IsConditional() bool {
-	return true
-}
-
-func (m *mockFilter) PrefixReplace(URL string) string {
-	return URL
-}
-
-func (m *mockFilter) Serve(res http.ResponseWriter, req *http.Request) {
-	res.Write([]byte(m.resBody))
-	h := res.Header()
-	for name, value := range m.resHeader {
-		h[name] = value
-	}
-
-	//Tests
-	b, _ := ioutil.ReadAll(req.Body)
-	if string(b) != m.reqBody {
-		m.t.Errorf("Request body: got = %s, want %s", string(b), m.reqBody)
-	}
-	if !reflect.DeepEqual(req.Header, m.reqHeader) {
-		m.t.Errorf("Request header \ngot  = %#v\nwant = %#v", req.Header, m.reqHeader)
-	}
-}
-
 func TestServer_ConditionalProxy(t *testing.T) {
 	type fields struct {
-		filter  mockFilter
-		filters []mockFilter
+		filter  *filter.Mock
+		filters []*filter.Mock
 	}
 	type args struct {
 		remoteAddr string
@@ -75,15 +37,18 @@ func TestServer_ConditionalProxy(t *testing.T) {
 		{
 			"wrong ip",
 			fields{
-				mockFilter{
+				filter.NewMock(
+					filter.HTTP,
+					0,
+					true,
 					true,
 					"take your book,\ntry to dance\n sing often",
 					http.Header{},
 					"walk outside,\n play boardgames",
 					http.Header{},
 					&testing.T{},
-				},
-				[]mockFilter{},
+				),
+				[]*filter.Mock{},
 			},
 			args{"192.168.1"},
 			wants{
@@ -100,7 +65,10 @@ func TestServer_ConditionalProxy(t *testing.T) {
 		{
 			"One filter",
 			fields{
-				mockFilter{
+				filter.NewMock(
+					filter.HTTP,
+					0,
+					true,
 					true,
 					"take your book,\ntry to dance\n sing often",
 					http.Header{
@@ -112,8 +80,8 @@ func TestServer_ConditionalProxy(t *testing.T) {
 						"Content-Length": []string{"30"},
 					},
 					&testing.T{},
-				},
-				[]mockFilter{},
+				),
+				[]*filter.Mock{},
 			},
 			args{"192.168.1.2:65432"},
 			wants{
@@ -133,7 +101,10 @@ func TestServer_ConditionalProxy(t *testing.T) {
 		{
 			"Not Concerned",
 			fields{
-				mockFilter{
+				filter.NewMock(
+					filter.HTTP,
+					0,
+					false,
 					false,
 					"take your book,\ntry to dance\n sing often",
 					http.Header{
@@ -145,8 +116,8 @@ func TestServer_ConditionalProxy(t *testing.T) {
 						"Content-Length": []string{"30"},
 					},
 					&testing.T{},
-				},
-				[]mockFilter{},
+				),
+				[]*filter.Mock{},
 			},
 			args{"192.168.1.2:65432"},
 			wants{
@@ -165,7 +136,10 @@ func TestServer_ConditionalProxy(t *testing.T) {
 		}, {
 			"One filter",
 			fields{
-				mockFilter{
+				filter.NewMock(
+					filter.HTTP,
+					0,
+					true,
 					true,
 					"take your book,\ntry to dance\n sing often",
 					http.Header{
@@ -177,8 +151,8 @@ func TestServer_ConditionalProxy(t *testing.T) {
 						"Content-Length": []string{"30"},
 					},
 					&testing.T{},
-				},
-				[]mockFilter{},
+				),
+				[]*filter.Mock{},
 			},
 			args{"192.168.1.2:65432"},
 			wants{
@@ -198,8 +172,11 @@ func TestServer_ConditionalProxy(t *testing.T) {
 		{
 			"list of filters",
 			fields{
-				mockFilter{
+				filter.NewMock(
+					filter.HTTP,
+					0,
 					false,
+					true,
 					"hello world",
 					http.Header{
 						"Host":  []string{"example.com"},
@@ -210,10 +187,13 @@ func TestServer_ConditionalProxy(t *testing.T) {
 						"Content-Length": []string{"30"},
 					},
 					&testing.T{},
-				},
-				[]mockFilter{
-					{
+				),
+				[]*filter.Mock{
+					filter.NewMock(
+						filter.HTTP,
+						0,
 						false,
+						true,
 						"hello world 2",
 						http.Header{
 							"Host":  []string{"example.com"},
@@ -224,8 +204,11 @@ func TestServer_ConditionalProxy(t *testing.T) {
 							"Content-Length": []string{"30"},
 						},
 						&testing.T{},
-					},
-					{
+					),
+					filter.NewMock(
+						filter.HTTP,
+						0,
+						true,
 						true,
 						"take your book,\ntry to dance\n sing often",
 						http.Header{
@@ -237,8 +220,11 @@ func TestServer_ConditionalProxy(t *testing.T) {
 							"Content-Length": []string{"30"},
 						},
 						&testing.T{},
-					},
-					{
+					),
+					filter.NewMock(
+						filter.HTTP,
+						0,
+						true,
 						true,
 						"hello world 3",
 						http.Header{
@@ -250,7 +236,7 @@ func TestServer_ConditionalProxy(t *testing.T) {
 							"Content-Length": []string{"30"},
 						},
 						&testing.T{},
-					}},
+					)},
 			},
 			args{"192.168.1.2:65432"},
 			wants{
@@ -273,13 +259,13 @@ func TestServer_ConditionalProxy(t *testing.T) {
 			// logrus mock
 			log, _ := logrustest.NewNullLogger()
 
-			tt.fields.filter.t = t
-			s := server.New(log, "64535", &tt.fields.filter)
+			tt.fields.filter.T = t
+			s := server.New(log, "64535", tt.fields.filter)
 
 			for _, f := range tt.fields.filters {
 				f := f // Warning of using variables in loop
-				f.t = t
-				s.Insert(&f)
+				f.T = t
+				s.Insert(f)
 			}
 
 			req, _ := http.NewRequest("GET", "/", strings.NewReader(tt.wants.reqBody))

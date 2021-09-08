@@ -91,13 +91,11 @@ func genNewFromConfig() fNewConfig {
 
 		switch strings.ToLower(c.Type) {
 		case "http":
-			f.kind = httpFilter
+			f.kind = HTTP
 		case "tcp":
-			f.kind = httpFilter
-		case "udp":
-			f.kind = httpFilter
+			f.kind = TCP
 		default:
-			f.kind = httpFilter
+			f.kind = HTTP
 		}
 
 		f.port = fmt.Sprintf("%d", c.Port)
