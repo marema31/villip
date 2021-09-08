@@ -52,7 +52,10 @@ func (f *Filter) ServeTCP() error {
 }
 
 func copyTCP(closer chan struct{}, dst io.Writer, src io.Reader, log logrus.FieldLogger) {
-	n, _ := io.Copy(dst, src)
-	log.Debugf("transfered: %d bytes", n)
+	n, err := io.Copy(dst, src)
+	if err != nil {
+		log.Errorf("transfer fail: %v", err)
+	}
+	log.Debugf("transferred: %d bytes", n)
 	closer <- struct{}{} // connection is closed, send signal to stop proxy
 }
