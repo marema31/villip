@@ -56,6 +56,7 @@ func copyTCP(closer chan struct{}, dst io.Writer, src io.Reader, log logrus.Fiel
 	if err != nil {
 		log.Errorf("transfer fail: %v", err)
 	}
+
 	log.Debugf("transferred: %d bytes", n)
 	closer <- struct{}{} // connection is closed, send signal to stop proxy
 }
