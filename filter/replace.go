@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,8 +64,13 @@ func (f *Filter) headerReplace(log logrus.FieldLogger, parsedHeader http.Header,
 
 		if parsedHeader.Get(h.Name) == "" || h.Force {
 			// parsedHeader.Set(h.Name, h.Value) // Use CanonicalMIMEHeaderKey that modify the key
-			parsedHeader[h.Name] = []string{h.Value}
-			log.Debug(fmt.Sprintf("Set header %s with value :  %s", h.Name, h.Value))
+			value := h.Value
+			if h.UUID {
+				value = uuid.NewV4().String()
+			}
+
+			parsedHeader[h.Name] = []string{value}
+			log.Debug(fmt.Sprintf("Set header %s with value :  %s", h.Name, value))
 		}
 	}
 }

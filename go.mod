@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect

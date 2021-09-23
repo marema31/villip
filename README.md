@@ -91,6 +91,12 @@ request:        #the http request config part
     - name: "X-community"
       value: "In real life"
       force: false
+    - name: "X-request-id"
+      uuid: true  # will add this header with a generated uuid if not present
+      force: false
+    - name: "X-random-id"
+      uuid: true
+      force: true
 restricted:
   - "192.168.1.0/24"
   - "192.168.8.0/24"

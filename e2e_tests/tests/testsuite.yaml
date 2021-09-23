@@ -240,6 +240,7 @@ testcases:
           - result.headers.x-added ShouldContainSubstring ""
           - result.headers.x-received ShouldContainSubstring "here a message"
           - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.x-received-3 ShouldNotBeBlank
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
