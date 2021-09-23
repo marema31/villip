@@ -97,6 +97,7 @@
         Content-Type: [text/html]
         X-Received: {{ index .Request.Headers "X-Tbm"}}
         X-Received-2: {{ index .Request.Headers "X-Added"}}
+        X-Received-3: {{ index .Request.Headers "X-Request-Id"}}
         X-Tbm: The message is here
       body: >
         site:normal

@@ -19,6 +19,7 @@ type Cheader struct {
 	Value string `yaml:"value" json:"value"`
 	Force bool   `yaml:"force" json:"force"`
 	Add   bool   `yaml:"add" json:"add"`
+	UUID  bool   `yaml:"uuid" json:"uuid"`
 }
 
 // Caction configuration parts for request and response  management.
