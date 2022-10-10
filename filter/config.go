@@ -65,7 +65,7 @@ func parseTokenConfig(log logrus.FieldLogger, tokenConfig CtokenAction) (string,
 }
 
 // genNewFromConfig return a function that create a new config
-//nolint: funlen,gocognit
+// nolint: funlen,gocognit
 func genNewFromConfig() fNewConfig {
 	return func(log logrus.FieldLogger, c Config) (string, uint8, FilteredServer) {
 		f := Filter{}

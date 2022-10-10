@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-//NewFromEnv instantiate a Filter object from the environment variable configuration.
-//nolint: funlen,gocognit
+// NewFromEnv instantiate a Filter object from the environment variable configuration.
+// nolint: funlen,gocognit
 func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 	var ok bool
 

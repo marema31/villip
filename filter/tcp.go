@@ -18,8 +18,8 @@ func (f *Filter) ServeTCP() error {
 	}
 
 	for {
-		conn, err := listener.Accept()
-		log := f.log.WithField("remote", conn.RemoteAddr())
+		clientConn, err := listener.Accept()
+		log := f.log.WithField("remote", clientConn.RemoteAddr())
 
 		log.Debug("New connection")
 
@@ -30,21 +30,21 @@ func (f *Filter) ServeTCP() error {
 		}
 
 		go func() {
-			defer conn.Close()
+			defer clientConn.Close()
 
-			conn2, err := net.Dial("tcp", remoteAddr)
+			serverConn, err := net.Dial("tcp", remoteAddr)
 			if err != nil {
 				log.Errorf("error dialing remote addr: %v", err)
 
 				return
 			}
 
-			defer conn2.Close()
+			defer serverConn.Close()
 
 			closer := make(chan struct{}, 2) //nolint: gomnd
 
-			go copyTCP(closer, conn2, conn, log.WithField("type", "request"))
-			go copyTCP(closer, conn, conn2, log.WithField("type", "response"))
+			go copyTCP(closer, clientConn, serverConn, log.WithField("type", "response"))
+			go copyTCP(closer, serverConn, clientConn, log.WithField("type", "request"))
 			<-closer
 			log.Debug("Connection complete")
 		}()
