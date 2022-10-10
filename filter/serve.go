@@ -44,4 +44,5 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 
 	req.URL.Path = f.PrefixReplace(req.URL.Path)
 	proxy.ServeHTTP(res, req)
+	transport.CloseIdleConnections()
 }

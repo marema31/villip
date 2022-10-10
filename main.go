@@ -17,6 +17,7 @@ func main() {
 	log.SetLevel(logrus.InfoLevel)
 
 	if _, ok := os.LookupEnv("VILLIP_DEBUG"); ok {
+		log.Info("Debug log visibles")
 		log.SetLevel(logrus.DebugLevel)
 	}
 

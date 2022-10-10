@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -71,8 +71,7 @@ func (m *Mock) Serve(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// Tests
-	b, _ := ioutil.ReadAll(req.Body)
-	if string(b) != m.reqBody {
+	if b, _ := io.ReadAll(req.Body); string(b) != m.reqBody {
 		m.T.Errorf("Request body: got = %s, want %s", string(b), m.reqBody)
 	}
 

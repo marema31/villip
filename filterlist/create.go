@@ -1,7 +1,6 @@
 package filterlist
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -99,7 +98,7 @@ func (fl *List) CreateServers(upLog logrus.FieldLogger) map[string]server.Server
 }
 
 func (fl *List) readConfigFiles(upLog logrus.FieldLogger, folderPath string) {
-	files, err := ioutil.ReadDir(folderPath)
+	files, err := os.ReadDir(folderPath)
 	if err != nil {
 		upLog.Fatalf("Error getting list of configuration files: %v", err)
 	}

@@ -11,6 +11,10 @@ func (f *Filter) startLog() {
 		f.log.Info("All requests")
 	}
 
+	if f.kind != HTTP {
+		return
+	}
+
 	f.log.Info(fmt.Sprintf("For content-type %s", f.contentTypes))
 
 	f.printBodyReplaceInLog("request")

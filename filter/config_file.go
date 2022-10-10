@@ -2,7 +2,7 @@ package filter
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -12,7 +12,7 @@ import (
 func (f *Factory) NewFromYAML(filePath string) (string, uint8, FilteredServer) {
 	log := f.log.WithField("file", filepath.Base(filePath))
 
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatalf("Cannot read file: %v", err)
 	}
@@ -31,7 +31,7 @@ func (f *Factory) NewFromYAML(filePath string) (string, uint8, FilteredServer) {
 func (f *Factory) NewFromJSON(filePath string) (string, uint8, FilteredServer) {
 	log := f.log.WithField("file", filepath.Base(filePath))
 
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatalf("Cannot read file: %v", err)
 	}

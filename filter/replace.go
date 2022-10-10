@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -102,7 +101,7 @@ func (f *Filter) readAndReplaceBody(
 		body = bod
 	}
 
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return 0, nil, "", "", err
 	}
@@ -122,12 +121,12 @@ func (f *Filter) readAndReplaceBody(
 			return 0, nil, "", "", err
 		}
 
-		body = ioutil.NopCloser(w)
+		body = io.NopCloser(w)
 		contentLength = w.Len()
 
 	default:
 		buf := bytes.NewBufferString(modifiedBody)
-		body = ioutil.NopCloser(buf)
+		body = io.NopCloser(buf)
 		contentLength = buf.Len()
 	}
 
