@@ -59,10 +59,16 @@ func (s *Server) ConditionalProxy(res http.ResponseWriter, req *http.Request) {
 // Serve listens to the port and call the correct filter.
 func (s *Server) Serve() error {
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("/", s.ConditionalProxy)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", s.port), mux)
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", s.port),
+		Handler: mux,
+	}
+	server.SetKeepAlivesEnabled(false)
+	err := server.ListenAndServe()
+
+	// err := http.ListenAndServe(fmt.Sprintf(":%s", s.port), mux)
 	if err != nil {
 		s.log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
 	}
