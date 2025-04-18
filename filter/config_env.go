@@ -43,6 +43,15 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 		villipPort = "8080"
 	}
 
+	// environment variable VILLIP_PORT is automatically defined by k8s with tcp://serviceIP:serviceFirstPort
+	if strings.HasPrefix(villipPort, "tcp://") {
+		fields := strings.Split(villipPort, ":")
+		if len(fields) == 3 {
+			villipPort = fields[2]
+		}
+
+	}
+
 	port, err := strconv.Atoi(villipPort)
 	if err != nil {
 		f.log.Fatalf("%s is not a valid TCP port", villipPort)

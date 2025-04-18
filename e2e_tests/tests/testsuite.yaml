@@ -164,9 +164,9 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
-          - result.headers.x-tbm ShouldContainSubstring "The message is here" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
+          - result.headers.X-Tbm ShouldContainSubstring "The message is here"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
@@ -180,9 +180,9 @@ testcases:
           - result.body ShouldContainSubstring "site:normal"
           - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "The message is here"
-          - result.headers.x-added ShouldContainSubstring ""
-          - result.headers.x-received ShouldContainSubstring "no message"
+          - result.headers.X-Tbm ShouldContainSubstring "The message is here"
+          - result.headers.X-Added ShouldContainSubstring ""
+          - result.headers.X-Received ShouldContainSubstring "no message"
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
@@ -196,9 +196,9 @@ testcases:
           - result.body ShouldContainSubstring "site:low"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message"
-          - result.headers.x-added ShouldContainSubstring ""
-          - result.headers.x-received ShouldContainSubstring "no message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring ""
+          - result.headers.X-Received ShouldContainSubstring "no message"
   - name : replace request and response headers header sent
     steps:
       - type: http
@@ -217,10 +217,10 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "take your book, play videogames, try to dance, sing often"
-          - result.headers.x-tbm ShouldContainSubstring "The message is here" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "The message is here"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
@@ -236,11 +236,11 @@ testcases:
           - result.body ShouldContainSubstring "site:normal"
           - result.body ShouldContainSubstring "enjoy your life,watch films,go to arcade"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "The message is here"
-          - result.headers.x-added ShouldContainSubstring ""
-          - result.headers.x-received ShouldContainSubstring "here a message"
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
-          - result.headers.x-received-3 ShouldNotBeBlank
+          - result.headers.X-Tbm ShouldContainSubstring "The message is here"
+          - result.headers.X-Added ShouldContainSubstring ""
+          - result.headers.X-Received ShouldContainSubstring "here a message"
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Received-3 ShouldNotBeBlank
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port1}}/post/youngster"
@@ -256,10 +256,10 @@ testcases:
           - result.body ShouldContainSubstring "site:low"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message"
-          - result.headers.x-added ShouldContainSubstring ""
-          - result.headers.x-received ShouldContainSubstring "no message"
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring ""
+          - result.headers.X-Received ShouldContainSubstring "no message"
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
   - name : Only if URL correspond
     steps:
       - type: http
@@ -276,10 +276,10 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch films,Go to concert"
           - result.body ShouldContainSubstring "Get your book, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port2}}/dev/urgent/post/youngster/connected"
@@ -294,10 +294,10 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
   - name : Without prefix
     steps:
       - type: http
@@ -314,10 +314,10 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch films,Go to concert"
           - result.body ShouldContainSubstring "Get your book, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
       - type: http
         method: POST
         url: "http://{{.villip_server}}:{{.villip_port3}}/urgent/post/youngster/connected"
@@ -332,10 +332,10 @@ testcases:
           - result.body ShouldContainSubstring "site:urgent"
           - result.body ShouldContainSubstring "enjoy your life,watch streaming,Go to concert"
           - result.body ShouldContainSubstring "Get your laptop, play videogames, try to dance, rap often"
-          - result.headers.x-tbm ShouldContainSubstring "no message" # Header keys are lowercased by venom
-          - result.headers.x-added ShouldContainSubstring "Always here"
-          - result.headers.x-received ShouldContainSubstring ""
-          - result.headers.x-received-2 ShouldContainSubstring "and a second message"
+          - result.headers.X-Tbm ShouldContainSubstring "no message"
+          - result.headers.X-Added ShouldContainSubstring "Always here"
+          - result.headers.X-Received ShouldContainSubstring ""
+          - result.headers.X-Received-2 ShouldContainSubstring "and a second message"
   - name : Status
     steps:
       - type: http
