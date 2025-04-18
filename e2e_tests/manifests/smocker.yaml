@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: smocker
+  labels:
+    app.kubernetes.io/name: smocker
+spec:
+  containers:
+  - name: smocker
+    image: smocker
+    imagePullPolicy: Never # Force to use the image loaded in kind
+    volumeMounts:
+    - name: mocks
+      mountPath: /mocks
+    ports:
+      - containerPort: 8080
+  volumes:
+  - name: mocks
+    configMap:
+      name: smocker-mocks
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smocker
+spec:
+  selector:
+    app.kubernetes.io/name: smocker
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

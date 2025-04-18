@@ -46,7 +46,6 @@ services:
       context: smocker
     volumes:
       - "./mocks:/mocks"
-      - tcpoutput:/tcpoutput
     networks:
       - villip_test
     # ports:

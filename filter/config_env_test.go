@@ -62,6 +62,54 @@ func TestNewFromEnv(t *testing.T) {
 			filter.Config{},
 		},
 		{
+			"wrong k8s string port",
+			args{map[string]string{
+				"VILLIP_URL":  "http://localhost:8081",
+				"VILLIP_PORT": "tcp://villip",
+			}},
+			true,
+			filter.Config{},
+		},
+		{
+			"wrong k8s string port number",
+			args{map[string]string{
+				"VILLIP_URL":  "http://localhost:8081",
+				"VILLIP_PORT": "tcp://villip:dummy",
+			}},
+			true,
+			filter.Config{},
+		},
+		{
+			"correct k8s string port number",
+			args{map[string]string{
+				"VILLIP_URL":  "http://localhost:8081",
+				"VILLIP_PORT": "tcp://villip:8080",
+			}},
+			false,
+			filter.Config{Dump: filter.Cdump{
+				Folder: "",
+				URLs:   []string(nil),
+			},
+				Force:    false,
+				Insecure: false,
+				Port:     8080,
+				Prefix:   []filter.Creplacement{},
+				Priority: 0,
+				Replace:  []filter.Creplacement{},
+				Request: filter.Caction{
+					Replace: []filter.Creplacement{},
+					Header:  []filter.Cheader{},
+				},
+				Response: filter.Caction{
+					Replace: []filter.Creplacement{},
+					Header:  []filter.Cheader{},
+				},
+				Restricted: []string(nil),
+				Token:      []filter.CtokenAction(nil),
+				Type:       "",
+				URL:        "http://localhost:8081"},
+		},
+		{
 			"missing to",
 			args{map[string]string{
 				"VILLIP_URL":  "http://localhost:8081",

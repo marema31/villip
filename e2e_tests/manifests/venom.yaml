@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-outputs
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Mi
+  hostPath:
+    path: /tmp/k8svillipoutputs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-outputs
+spec:
+  volumeName: pv-outputs
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: venom
+spec:
+  template:
+    spec:
+      containers:
+      - name: venom
+        image: venom
+        imagePullPolicy: Never # Force to use the image loaded in kind
+        volumeMounts:
+        - name: testsuite
+          mountPath: /testsuite
+        - name: outputs
+          mountPath: /outputs
+        - name: tcpoutput
+          mountPath: /tcpoutput
+        env:
+          - name: VENOM_VAR_VILLIP_SERVER
+            value: villip
+          - name: VENOM_VAR_VILLIP_PORT1
+            value: "8080"
+          - name: VENOM_VAR_VILLIP_PORT2
+            value: "8081"
+          - name: VENOM_VAR_VILLIP_PORT3
+            value: "8082"
+      volumes:
+      - name: tcpoutput
+        persistentVolumeClaim:
+          claimName: pvc-tcpoutput
+      - name: testsuite
+        configMap:
+          name: venom-tests
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: pvc-outputs
+      restartPolicy: Never
+  backoffLimit: 5

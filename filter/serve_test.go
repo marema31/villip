@@ -133,7 +133,6 @@ func TestFilter_Serve(t *testing.T) {
 					"Content-Length":   []string{"46"},
 					"X-Forwarded-Host": []string{"example.com"},
 					"X-Env":            []string{"prod"},
-					"User-Agent":       []string{"Go-http-client/1.1"},
 				},
 				"walk outside,\n play boardgames",
 				http.Header{
