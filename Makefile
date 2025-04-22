@@ -21,7 +21,7 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 export GO111MODULE=on
 
 .PHONY: all
-all: fmt lint vet golangci-lint | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
+all: fmt vet golangci-lint | $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
 		-ldflags '-X $(MODULE)/cmd.version=$(VERSION) -X $(MODULE)/cmd.date=$(DATE) -X $(MODULE)/cmd.commit=$(COMMIT)' \
@@ -41,10 +41,6 @@ $(BIN)/%: | $(BIN) ; $(info $(M) building $(PACKAGE)…)
 	   env GO111MODULE=off GOPATH=$$tmp GOBIN=$(BIN) $(GO) get $(PACKAGE) \
 		|| ret=$$?; \
 	   rm -rf $$tmp ; exit $$ret
-
-GOLINT = $(BIN)/golint
-$(BIN)/golint: PACKAGE=golang.org/x/lint/golint
-
 
 GOCOV = $(BIN)/gocov
 $(BIN)/gocov: PACKAGE=github.com/axw/gocov/...
@@ -109,10 +105,6 @@ golangci-lint: | $(GOLANGCI) ; $(info $(M) running golangci-lint_) @ ## Run gola
 .PHONY: vet
 vet: ; $(info $(M) running govet…) @ ## Run go vet
 	$Q $(GO) vet $(PKGS)
-
-.PHONY: lint
-lint: | $(GOLINT) ; $(info $(M) running golint…) @ ## Run golint
-	$Q $(GOLINT)  -set_exit_status $(PKGS)
 
 .PHONY: fmt
 fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files

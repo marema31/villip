@@ -33,7 +33,7 @@ func (f *Filter) UpdateRequest(r *http.Request) {
 		requestLog.Error("Error")
 	}
 
-	requestLog.Debug(fmt.Sprintf("Request received\n%s", string(bytes.Replace(data, []byte{13, 10}, []byte{10}, -1))))
+	requestLog.Debug(fmt.Sprintf("Request received\n%s", string(bytes.ReplaceAll(data, []byte{13, 10}, []byte{10}))))
 
 	// in request sometimes there is no body
 	if r.Body != nil {

@@ -38,7 +38,7 @@ func do(url string, s string, rep []replaceParameters, prefix bool) string {
 				s = r.to + s[len(r.from):]
 			}
 		} else {
-			s = strings.Replace(s, r.from, r.to, -1)
+			s = strings.ReplaceAll(s, r.from, r.to)
 		}
 	}
 

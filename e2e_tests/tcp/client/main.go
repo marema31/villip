@@ -51,7 +51,7 @@ func SendAndReceive(proto, addr string, out chan<- bool, sum [20]byte, data []by
 }
 
 func main() {
-	if len(os.Args) != 3 { //nolint: gomnd
+	if len(os.Args) != 3 {
 		log.Println("Usage: server filename logfile")
 
 		os.Exit(1)
@@ -109,7 +109,7 @@ func main() {
 
 	if !result {
 		log.Println("Test faulted")
-		os.Exit(2) //nolint: gomnd
+		os.Exit(2)
 	}
 
 	log.Println("Test succeeded")
