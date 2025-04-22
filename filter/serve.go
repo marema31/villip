@@ -29,7 +29,7 @@ func (f *Filter) Serve(res http.ResponseWriter, req *http.Request) {
 
 	transport := http.Transport{
 		Proxy:               http.ProxyFromEnvironment,
-		TLSHandshakeTimeout: 10 * time.Second, //nolint: gomnd
+		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
 	if f.insecure {

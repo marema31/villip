@@ -85,14 +85,14 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 		}
 
 		if urlList, ok := f.lookupEnv("VILLIP_FOR"); ok {
-			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+			urls = strings.Split(strings.ReplaceAll(urlList, " ", ""), ",")
 		}
 
 		c.Response.Replace = append(c.Response.Replace, Creplacement{From: from, To: to, Urls: urls})
 	}
 
 	if restricteds, ok = f.lookupEnv("VILLIP_RESTRICTED"); ok {
-		c.Restricted = strings.Split(strings.Replace(restricteds, " ", "", -1), ",")
+		c.Restricted = strings.Split(strings.ReplaceAll(restricteds, " ", ""), ",")
 	}
 
 	i := 1
@@ -110,7 +110,7 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 
 		urls = []string{}
 		if urlList, ok := f.lookupEnv(fmt.Sprintf("VILLIP_FOR_%d", i)); ok {
-			urls = strings.Split(strings.Replace(urlList, " ", "", -1), ",")
+			urls = strings.Split(strings.ReplaceAll(urlList, " ", ""), ",")
 		}
 
 		c.Response.Replace = append(c.Response.Replace, Creplacement{From: from, To: to, Urls: urls})
@@ -118,15 +118,15 @@ func (f *Factory) NewFromEnv() (string, uint8, FilteredServer) {
 	}
 
 	if status, ok := f.lookupEnv("VILLIP_STATUS"); ok {
-		c.Status = strings.Split(strings.Replace(status, " ", "", -1), ",")
+		c.Status = strings.Split(strings.ReplaceAll(status, " ", ""), ",")
 	}
 
 	if contenttypes, ok := f.lookupEnv("VILLIP_TYPES"); ok {
-		c.ContentTypes = strings.Split(strings.Replace(contenttypes, " ", "", -1), ",")
+		c.ContentTypes = strings.Split(strings.ReplaceAll(contenttypes, " ", ""), ",")
 	}
 
 	if dumpURLs, ok := f.lookupEnv("VILLIP_DUMPURLS"); ok {
-		c.Dump.URLs = strings.Split(strings.Replace(dumpURLs, " ", "", -1), ",")
+		c.Dump.URLs = strings.Split(strings.ReplaceAll(dumpURLs, " ", ""), ",")
 	}
 
 	from, ok = f.lookupEnv("VILLIP_PREFIX_FROM")

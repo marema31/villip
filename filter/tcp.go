@@ -41,7 +41,7 @@ func (f *Filter) ServeTCP() error {
 
 			defer serverConn.Close()
 
-			closer := make(chan struct{}, 2) //nolint: gomnd
+			closer := make(chan struct{}, 2)
 
 			go copyTCP(closer, clientConn, serverConn, log.WithField("type", "response"))
 			go copyTCP(closer, serverConn, clientConn, log.WithField("type", "request"))

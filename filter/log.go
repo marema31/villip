@@ -26,9 +26,10 @@ func (f *Filter) startLog() {
 func (f *Filter) printBodyReplaceInLog(action string) {
 	rep := []replaceParameters{}
 
-	if action == "request" {
+	switch action {
+	case "request":
 		rep = f.request.Replace
-	} else if action == "response" {
+	case "response":
 		rep = f.response.Replace
 	}
 
@@ -54,9 +55,10 @@ func (f *Filter) printBodyReplaceInLog(action string) {
 func (f *Filter) printHeaderReplaceInLog(action string) {
 	head := []Cheader{}
 
-	if action == "request" {
+	switch action {
+	case "request":
 		head = f.request.Header
-	} else if action == "response" {
+	case "response":
 		head = f.response.Header
 	}
 

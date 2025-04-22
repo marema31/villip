@@ -16,7 +16,7 @@ import (
 var _generateID = generateID //nolint: gochecknoglobals
 
 func generateID() (string, error) {
-	r := make([]byte, 12) //nolint: gomnd
+	r := make([]byte, 12)
 
 	if _, err := rand.Read(r); err != nil {
 		return "", err
@@ -53,7 +53,7 @@ func (f *Filter) dumpToFile(fileType string, requestID string, url string, heade
 	}
 	defer file.Close()
 
-	if _, err := file.WriteString(fmt.Sprintf("URL: %s\n", url)); err != nil {
+	if _, err := fmt.Fprintf(file, "URL: %s\n", url); err != nil {
 		f.log.Fatalf("Failed to write header in %s: %v", requestID, err)
 	}
 
