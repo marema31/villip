@@ -36,7 +36,7 @@ type Caction struct {
 type CtokenAction struct {
 	Header string `yaml:"header" json:"header,omitempty"`
 	Value  string `yaml:"value" json:"value,omitempty"`
-	// +kubebuilder:validation:Enum=accept,reject,notEmpty
+	// +kubebuilder:validation:Enum=accept;reject;notEmpty
 	Action string `yaml:"action" json:"action,omitempty"`
 }
 
