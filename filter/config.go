@@ -71,7 +71,13 @@ func genNewFromConfig() fNewConfig {
 		f := Filter{}
 
 		if c.URL == "" {
-			log.Fatal("Missing url variable")
+			url, ok := os.LookupEnv("VILLIP_URL")
+			if !ok {
+				f.log.Fatal("Missing url variable and no VILLIP_URL environment variable defined")
+			}
+
+			c.URL = url
+			log.Fatal("")
 		}
 
 		f.url = c.URL
