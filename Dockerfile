@@ -1,4 +1,4 @@
-FROM golang:1.19 AS build_img
+FROM golang:1.24 AS build_img
 ENV APP_DIR=/app
 RUN mkdir -p $APP_DIR
 COPY *.go $APP_DIR
