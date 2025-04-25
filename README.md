@@ -21,6 +21,7 @@ VILLIP_DEBUG      | no        | If present Villip will print debug logs
 VILLIP_DUMPFOLDER | no        | If present Villip will dump the response (original and filtered) to files (two by requests)
 VILLIP_DUMPURLS   | no        | If present Villip will dump the response (original and filtered) only for URLs correponding to one of the provided regular expression (commas-separated list), if DUMPFOLDER not provided the dump will be on STDOUT
 VILLIP_FOLDER     | no        | Path to folder containing YAML configuration files, if present the other environment variables are no more mandatory
+VILLIP_FOLDER_RECURSE | no    | If present Villip will look for configuration file in all the subfolder under VILLIP_FOLDER
 VILLIP_FOR        | no        | Comma separated list of urls concerned by the first search/replace (all if empty)
 VILLIP_FROM       | yes       | First string to search
 VILLIP_FORCE      | no        | If present Villip will ignore the content-type and filter all responses
