@@ -2,6 +2,7 @@ package filterlist
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 
@@ -97,13 +98,19 @@ func (fl *List) CreateServers(upLog logrus.FieldLogger) map[string]server.Server
 	return servers
 }
 
-func (fl *List) readConfigFiles(upLog logrus.FieldLogger, folderPath string) {
+func (fl *List) readConfigFiles(upLog logrus.FieldLogger, folderPath string, recurse bool) {
+
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
 		upLog.Fatalf("Error getting list of configuration files: %v", err)
 	}
 
 	for _, file := range files {
+		if recurse && file.IsDir() {
+			fl.readConfigFiles(upLog, path.Join(folderPath, file.Name()), recurse)
+			continue
+		}
+
 		ext := filepath.Ext(file.Name())
 
 		switch ext {
@@ -132,6 +139,11 @@ func (fl *List) ReadConfig(upLog logrus.FieldLogger) {
 	}
 
 	if folderPath, ok := fl.lookupEnv("VILLIP_FOLDER"); ok {
-		fl.readConfigFiles(upLog, folderPath)
+		recurse := false
+		if _, ok := os.LookupEnv("VILLIP_FOLDER_RECURSE"); ok {
+			upLog.Info("Debug log visibles")
+			recurse = true
+		}
+		fl.readConfigFiles(upLog, folderPath, recurse)
 	}
 }

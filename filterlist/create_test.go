@@ -1,6 +1,7 @@
 package filterlist
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 	"strconv"
@@ -277,6 +278,7 @@ func TestList_readConfigFiles(t *testing.T) {
 	}
 	type args struct {
 		folderPath string
+		recurse    bool
 	}
 	tests := []struct {
 		name        string
@@ -292,6 +294,7 @@ func TestList_readConfigFiles(t *testing.T) {
 			},
 			args{
 				"dummy",
+				false,
 			},
 			true,
 			map[string]map[uint8]int{},
@@ -314,6 +317,7 @@ func TestList_readConfigFiles(t *testing.T) {
 			},
 			args{
 				"testdata",
+				false,
 			},
 			false,
 			map[string]map[uint8]int{
@@ -329,7 +333,40 @@ func TestList_readConfigFiles(t *testing.T) {
 				},
 			},
 		},
-	}
+		{
+			"recurse",
+			fields{
+				map[string]map[uint8][]filter.FilteredServer{
+					"8080": {
+						10: []filter.FilteredServer{
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+						},
+					},
+					"8081": {
+						10: []filter.FilteredServer{
+							filter.NewMock(filter.HTTP, 0, false, false, "", http.Header{}, "", http.Header{}, t),
+						},
+					},
+				},
+			},
+			args{
+				"testdata/recurse",
+				true,
+			},
+			false,
+			map[string]map[uint8]int{
+				"8080": {
+					10: 1,
+					1:  1,
+				},
+				"8081": {
+					10: 3,
+				},
+				"8082": {
+					11: 2,
+				},
+			},
+		}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use logrus abilities to test log.Fatal
@@ -342,7 +379,7 @@ func TestList_readConfigFiles(t *testing.T) {
 			fl.filters = tt.fields.filters
 			fl.factory = &MockCreator{}
 
-			fl.readConfigFiles(log, tt.args.folderPath)
+			fl.readConfigFiles(log, tt.args.folderPath, tt.args.recurse)
 
 			fatal := HadErrorLevel(hook, logrus.FatalLevel)
 			if fatal != tt.expectFatal {
@@ -350,6 +387,7 @@ func TestList_readConfigFiles(t *testing.T) {
 			}
 
 			if fatal {
+				fmt.Print(hook.LastEntry())
 				return
 			}
 
