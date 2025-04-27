@@ -66,9 +66,8 @@ func (s *Server) Serve() error {
 		Handler: mux,
 	}
 	server.SetKeepAlivesEnabled(false)
-	err := server.ListenAndServe()
 
-	// err := http.ListenAndServe(fmt.Sprintf(":%s", s.port), mux)
+	err := server.ListenAndServe()
 	if err != nil {
 		s.log.WithFields(logrus.Fields{"error": err}).Fatal("villip close on error")
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/marema31/villip/filterlist"
+	"github.com/marema31/villip/health"
 )
 
 func main() {
@@ -34,6 +35,14 @@ func main() {
 	for _, s := range servers {
 		g.Go(s.Serve)
 	}
+
+	healthPort := "9000"
+	if port, ok := os.LookupEnv("VILLIP_HEALTH_PORT"); ok {
+		log.Infof("health port: %s", healthPort)
+		healthPort = port
+	}
+
+	g.Go(func() error { return health.Serve(log, healthPort) })
 
 	if err := g.Wait(); err != nil {
 		log.Fatalf("One server exiting in error: %v", err)

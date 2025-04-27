@@ -77,7 +77,6 @@ func genNewFromConfig() fNewConfig {
 			}
 
 			c.URL = url
-			log.Fatal("")
 		}
 
 		f.url = c.URL

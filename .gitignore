@@ -32,3 +32,4 @@ coverage.txt
 /test/tests.*
 /test/coverage.*
 e2e_tests/outputs/*.xml
+e2e_tests/outputs/*.log
