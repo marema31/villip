@@ -25,6 +25,7 @@ VILLIP_FOLDER_RECURSE | no    | If present Villip will look for configuration fi
 VILLIP_FOR        | no        | Comma separated list of urls concerned by the first search/replace (all if empty)
 VILLIP_FROM       | yes       | First string to search
 VILLIP_FORCE      | no        | If present Villip will ignore the content-type and filter all responses
+VILLIP_HEALTH_PORT| no        | Port of proxy health probe (9000 by default)
 VILLIP_INSECURE   | no        | If present Villip will not verify the tls certificate validity for proxified site
 VILLIP_TO         | yes       | Replacement for the VILLIP_FROM string
 VILLIP_FOR_XX     | no        | Comma separated list of urls concerned by this XX search
